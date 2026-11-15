@@ -1,0 +1,38 @@
+{
+  "name": "log-cosmos",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Наше место среди звёзд — путешествие через 27 порядков величины на логарифмической линейке",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "pnpm run check && vite build",
+    "preview": "vite preview --host --port 4173",
+    "serve": "vite build && vite preview --host --port 4173",
+    "check": "tsc --noEmit && node scripts/check-i18n.ts && node scripts/check-glyphs.ts",
+    "test": "vitest run",
+    "data:stars": "node scripts/build-stars.ts",
+    "data:fonts": "node scripts/subset-fonts.ts",
+    "shots": "node scripts/shots.ts"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "gsap": "3.15.1",
+    "katex": "0.19.1",
+    "lenis": "1.3.27",
+    "postprocessing": "6.39.6",
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/three": "0.187.0",
+    "fontkit": "3.0.0",
+    "playwright": "1.65.1",
+    "subset-font": "2.9.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
+  }
+}

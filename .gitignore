@@ -1,0 +1,7 @@
+node_modules/
+dist/
+assets-src/hyg/*.gz
+assets-src/hyg/*.csv
+shots/
+*.log
+.DS_Store
