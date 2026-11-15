@@ -169,7 +169,7 @@ export class HorizonLayer implements Layer {
   }
 
   update(f: Frame) {
-    const fade = 1 - smoothstep(3.4, 4.6, f.n);
+    const fade = 1 - smoothstep(2.9, 3.8, f.n);
     this.object.visible = fade > 0.001;
     if (!this.object.visible) return;
     const t = sub(this.obs, f.cam);

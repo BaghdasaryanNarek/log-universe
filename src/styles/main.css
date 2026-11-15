@@ -345,7 +345,7 @@ html.no-gl #beats { position: static; padding: 18vh var(--gutter) 10vh; }
 html.no-gl .beat { position: relative; visibility: visible !important; opacity: 1 !important; margin-bottom: 18vh; }
 html.no-gl .beat-inner { position: relative; top: auto; transform: none; width: min(100%, 46em); }
 html.no-gl .sky-caption { position: static; margin-top: 1em; }
-html.no-gl .hud { display: none; }
+html.no-gl .hud, html.no-gl .beat-ind { display: none; }
 .nogl-note { display: none; }
 html.no-gl .nogl-note { display: block; margin: 0 var(--gutter); padding-top: 14vh; color: var(--dim); font-size: var(--fs-small); }
 
