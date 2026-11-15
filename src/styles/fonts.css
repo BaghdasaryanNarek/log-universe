@@ -1,0 +1,56 @@
+/* Все шрифты локальные (SIL OFL), подмножества — scripts/subset-fonts.ts */
+@font-face {
+  font-family: 'Garamond 1614';
+  src: url('../assets/fonts/ebgaramond.woff2') format('woff2');
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Garamond 1614';
+  src: url('../assets/fonts/ebgaramond-italic.woff2') format('woff2');
+  font-weight: 400 800;
+  font-style: italic;
+  font-display: swap;
+}
+/* Армянский: x-высота Noto (536) против Garamond (400) — выравниваем size-adjust */
+@font-face {
+  font-family: 'Garamond 1614';
+  src: url('../assets/fonts/noto-serif-armenian.woff2') format('woff2');
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  font-style: normal;
+  unicode-range: U+0530-058F, U+FB13-FB17;
+  size-adjust: 82%;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Garamond 1614';
+  src: url('../assets/fonts/noto-serif-armenian.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: italic;
+  unicode-range: U+0530-058F, U+FB13-FB17;
+  size-adjust: 82%;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plex Mono 1614';
+  src: url('../assets/fonts/plexmono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plex Mono 1614';
+  src: url('../assets/fonts/plexmono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plex Mono 1614';
+  src: url('../assets/fonts/noto-sans-armenian.woff2') format('woff2');
+  font-weight: 100 900;
+  unicode-range: U+0530-058F, U+FB13-FB17;
+  size-adjust: 96%;
+  font-display: swap;
+}
+/* Глифы, которых нет в Plex Mono (⁻, θ), берутся из Garamond через стек семейства */

@@ -103,6 +103,7 @@ export class Hud {
   }
 
   relocalize() {
+    this.root.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n!); });
     this.marks.forEach((m, i) => {
       const b = BEATS[i];
       m.querySelector('.hud-mark-t')!.textContent = t(`beat.${b.id}`);

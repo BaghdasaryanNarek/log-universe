@@ -1,4 +1,4 @@
-import { FACTS, type FactId } from './facts.ts';
+﻿import { FACTS, type FactId } from './facts.ts';
 
 /** Бит — остановка на лог-пути: текст + (опционально) формула и инструмент. */
 export interface Beat {
@@ -19,8 +19,12 @@ export interface Beat {
 export const BEATS: Beat[] = [
   { id: 'hero', scene: 1, n: 0, win: [-1, 0.85], kind: 'hero', lines: ['hero.l1', 'hero.l2', 'hero.l3'] },
   {
-    id: 'pogson', scene: 5, n: 16.8, win: [16.15, 17.45], kind: 'text', kicker: 'pogson.kicker',
-    lines: ['pogson.l1', 'pogson.l2', 'pogson.l3', 'pogson.l4'], formula: 'pogson', tool: 'compare',
+    id: 'pogson', scene: 5, n: 16.8, win: [16.15, 17.03], kind: 'text', kicker: 'pogson.kicker',
+    lines: ['pogson.l1', 'pogson.l2', 'pogson.l3', 'pogson.l4'], formula: 'pogson',
+  },
+  {
+    id: 'compare', scene: 0, n: 17.25, win: [17.03, 17.7], kind: 'text', kicker: 'compare.kicker',
+    lines: ['compare.l1'], tool: 'compare',
   },
 ];
 

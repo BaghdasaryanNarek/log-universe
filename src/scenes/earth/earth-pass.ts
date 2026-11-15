@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { fullscreenMesh, setRayUniforms } from '../../gl/fullscreen.ts';
 import { EARTH_R } from '../../gl/astro.ts';
 import { len, mul, norm, smoothstep, sub, type V3 } from '../../core/vec.ts';
@@ -23,6 +23,7 @@ uniform float uAtmI;
 uniform vec3 uAtmCol;
 uniform vec3 uInk;
 uniform vec3 uBrass;
+uniform float uSpace;
 varying vec3 vRay;
 float gridLine(float x, float step) {
   float g = abs(fract(x / step + 0.5) - 0.5) * step;
@@ -53,7 +54,8 @@ void main() {
     }
   }
   float x = ang - rho;
-  float glow = hit ? exp(x / (uAtmW * 0.35)) * 0.55 : exp(-x / uAtmW);
+  // из космоса тонкий ореол заходит и на диск; с земли свечение только над горизонтом
+  float glow = hit ? exp(x / (uAtmW * 0.35)) * 0.55 * uSpace : exp(-x / uAtmW);
   col += uAtmCol * glow * uAtmI;
   a = max(a, clamp(glow * uAtmI, 0.0, 1.0));
   gl_FragColor = vec4(col, a);
@@ -63,7 +65,7 @@ export class EarthPass implements Layer {
   object: THREE.Mesh;
   private mat: THREE.ShaderMaterial;
   private ecef = new THREE.Matrix3();
-  constructor(private center: V3, private gmst: number) {
+  constructor(private center: V3, gmst: number) {
     const { mesh, mat } = fullscreenMesh(FRAG, {
       uDirC: { value: new THREE.Vector3() },
       uCosRho: { value: 0 },
@@ -77,6 +79,7 @@ export class EarthPass implements Layer {
       uAtmCol: { value: new THREE.Color('#5a3d22') },
       uInk: { value: new THREE.Color('#050609') },
       uBrass: { value: new THREE.Color('#e8b04b') },
+      uSpace: { value: 0 },
     });
     this.object = mesh;
     this.mat = mat;
@@ -104,8 +107,9 @@ export class EarthPass implements Layer {
     const rho = Math.asin(Math.min(1, EARTH_R / D));
     const wSpace = inside ? 0.09 : Math.max(0.0015, Math.asin(Math.min(1, (EARTH_R + H) / D)) - rho);
     const kSpace = smoothstep(4.3, 5.6, f.n);
-    u.uAtmW.value = 0.09 * (1 - kSpace) + wSpace * kSpace;
-    u.uAtmI.value = 0.42 * (1 - kSpace) + 0.35 * kSpace;
+    u.uSpace.value = kSpace;
+    u.uAtmW.value = 0.07 * (1 - kSpace) + wSpace * kSpace;
+    u.uAtmI.value = 0.3 * (1 - kSpace) + 0.35 * kSpace;
     (u.uAtmCol.value as THREE.Color).setRGB(0.35 - 0.2 * kSpace, 0.24 - 0.02 * kSpace, 0.13 + 0.32 * kSpace, THREE.SRGBColorSpace);
     this.object.visible = f.n < 11.8;
   }

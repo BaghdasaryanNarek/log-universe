@@ -1,4 +1,4 @@
-import { gsap } from 'gsap';
+﻿import { gsap } from 'gsap';
 import { SplitText } from 'gsap/SplitText';
 import { BEATS, type Beat } from '../content/scenes.ts';
 import { t, tHtml, lang } from '../i18n/index.ts';
@@ -34,7 +34,6 @@ class BeatView {
       parts.push('<div class="hero-lines">');
       for (const k of b.lines) parts.push(`<p class="line">${tHtml(k)}</p>`);
       parts.push('</div>');
-      if (this.hooks.heroExtra) parts.push(`<p class="sky-caption">${this.hooks.heroExtra()}</p>`);
     } else {
       const nTxt = fmtNum(b.n, lang(), 1);
       parts.push(`<p class="kicker"><span class="kicker-log">log₁₀ d = ${nTxt}</span><span class="kicker-sep" aria-hidden="true"></span><span>${tHtml(b.kicker!)}</span></p>`);
@@ -45,7 +44,8 @@ class BeatView {
       if (b.formula === 'pogson') parts.push(`<p class="note">${tHtml('pogson.note')}</p>`);
       if (b.tool) parts.push('<div class="tool-slot"></div>');
     }
-    this.el.innerHTML = `<div class="beat-inner">${parts.join('')}</div>`;
+    const extra = b.kind === 'hero' && this.hooks.heroExtra ? `<p class="sky-caption">${this.hooks.heroExtra()}</p>` : '';
+    this.el.innerHTML = `<div class="beat-inner">${parts.join('')}</div>${extra}`;
     const slot = this.el.querySelector<HTMLElement>('.tool-slot');
     if (slot && this.hooks.mountTool) this.hooks.mountTool(b, slot);
   }

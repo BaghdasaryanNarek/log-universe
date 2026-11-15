@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
@@ -10,6 +10,9 @@ import type { ObserverFrame } from '../../gl/astro.ts';
  * Передний план Hero в локальной системе наблюдателя (x — восток, y — север, z — зенит, метры):
  * гравированная гряда холмов на севере и телескоп-рефрактор, направленный на Мицар.
  */
+/** Положение телескопа в локальной системе (восток, север), м — относительно азимута взгляда задаётся в main. */
+export let TEL_OFFSET: [number, number] = [0.9, 4.2];
+export const setTelescopeOffset = (e: number, n: number) => { TEL_OFFSET = [e, n]; };
 const BRASS = new THREE.Color('#e8b04b');
 const PAPER = new THREE.Color('#f2ebdd');
 
@@ -22,9 +25,9 @@ varying float vH;
 void main() {
   // штриховка гравюры: наклонные линии в экранном пространстве, гуще у подножия
   float k = gl_FragCoord.x * 0.7071 + gl_FragCoord.y * 0.7071;
-  float density = mix(3.2, 7.0, clamp(vH, 0.0, 1.0));
-  float line = 1.0 - smoothstep(0.0, 1.1, abs(fract(k / density) - 0.5) * density);
-  float hatch = line * (1.0 - smoothstep(0.15, 0.95, vH)) * 0.16;
+  float density = 9.0;
+  float line = 1.0 - smoothstep(0.35, 1.35, abs(fract(k / density) - 0.5) * density);
+  float hatch = line * smoothstep(0.55, 0.0, vH) * 0.13;
   vec3 col = uInk + uBrass * hatch;
   gl_FragColor = vec4(col * uFade + uInk * (1.0 - uFade), uFade);
 }`;
@@ -56,7 +59,7 @@ export class HorizonLayer implements Layer {
   private fillMat: THREE.MeshBasicMaterial;
   private basis = new THREE.Matrix4();
 
-  constructor(private obs: V3, private frame: ObserverFrame, tubeAzDeg: number, tubeAltDeg: number) {
+  constructor(private obs: V3, frame: ObserverFrame, tubeAzDeg: number, tubeAltDeg: number) {
     const { east: E, north: N, zenith: Z } = frame;
     this.basis.set(E[0], N[0], Z[0], 0, E[1], N[1], Z[1], 0, E[2], N[2], Z[2], 0, 0, 0, 0, 1);
 
@@ -70,7 +73,7 @@ export class HorizonLayer implements Layer {
       const a = az * DEG;
       const x = Math.sin(a) * dist, y = Math.cos(a) * dist;
       pos.push(x, y, -60, x, y, h);
-      hn.push(1, 0);
+      hn.push(1.0, 0.0);
       if (i > 0) { const b = (i - 1) * 2; idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3); }
       const top: [number, number, number] = [x, y, h];
       if (prev) rim.push(...prev, ...top);
@@ -138,15 +141,19 @@ export class HorizonLayer implements Layer {
     tube.push(...fb.toArray(), ...fb.clone().addScaledVector(dir, 0.22).toArray());
     tube.push(...head, ...pivot.toArray());
 
-    this.object.add(this.lines(legs, PAPER, 1.6, 0.9, 6));
-    this.object.add(this.lines(tube, BRASS, 1.8, 1, 6));
+    // телескоп стоит в нескольких метрах впереди-справа от наблюдателя
+    const tel = new THREE.Group();
+    tel.position.set(TEL_OFFSET[0], TEL_OFFSET[1], 0);
+    this.object.add(tel);
+    tel.add(this.lines(legs, PAPER, 1.5, 0.5, 6));
+    tel.add(this.lines(tube, BRASS, 1.8, 1, 6));
     // заливка трубы — чтобы звёзды не просвечивали сквозь металл
     this.fillMat = new THREE.MeshBasicMaterial({ color: '#07080c', transparent: true });
     const cyl = new THREE.Mesh(new THREE.CylinderGeometry(rTube, rTube, Lf + Lb, 20, 1, true), this.fillMat);
     cyl.position.copy(pivot.clone().addScaledVector(dir, (Lf - Lb) / 2));
     cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
     cyl.renderOrder = 5;
-    this.object.add(cyl);
+    tel.add(cyl);
     this.object.matrixAutoUpdate = false;
   }
 

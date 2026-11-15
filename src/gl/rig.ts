@@ -1,4 +1,4 @@
-import { add, cross, DEG, lerp, lerp3, mul, norm, slerp, smoother, sub, dot, type V3 } from '../core/vec.ts';
+﻿import { add, cross, DEG, lerp, lerp3, mul, norm, slerp, smoother, sub, dot, type V3 } from '../core/vec.ts';
 import { altAzDir, toAltAz, type ObserverFrame } from './astro.ts';
 
 /**
@@ -34,14 +34,14 @@ export function createRig({ frame, telescope, mizarDir, alphaCen }: RigInput) {
   // оказались в кадре рядом (угол β от направления на α Cen).
   const A = norm(alphaCen);
   let Q = norm(cross(A, [0, 0, 1]));
-  const beta = 32 * DEG;
+  const beta = 26 * DEG;
   const pick = (q: V3) => norm(add(mul(A, Math.cos(beta)), mul(q, Math.sin(beta))));
   let vPog = pick(Q);
   {
-    // α Cen должна быть левее Солнца (справа на экране — Солнце, слева — текст сверху)
+    // α Cen должна быть правее Солнца: левая половина кадра занята текстом
     const up = norm(sub([0, 0, 1], mul(vPog, dot([0, 0, 1], vPog))));
     const R = norm(cross(vPog, up));
-    if (dot(sub(alphaCen, sun), R) > 0) { Q = mul(Q, -1); vPog = pick(Q); }
+    if (dot(sub(alphaCen, sun), R) < 0) { Q = mul(Q, -1); vPog = pick(Q); }
   }
   const upPog = norm(sub([0, 0, 1], mul(vPog, dot([0, 0, 1], vPog))));
 
@@ -50,8 +50,8 @@ export function createRig({ frame, telescope, mizarDir, alphaCen }: RigInput) {
     { n: 3, focus: telescope, V: vLevel, up: frame.zenith, sx: 0.12, sy: -0.2 },
     { n: 7.5, focus: telescope, V: vDown, up: upDown, sx: 0.1, sy: 0 },
     { n: 10.4, focus: telescope, V: vDown, up: upDown, sx: 0.1, sy: 0 },
-    { n: 13.4, focus: sun, V: vPog, up: upPog, sx: 0.16, sy: 0.02 },
-    { n: 27, focus: sun, V: vPog, up: upPog, sx: 0.16, sy: 0.02 },
+    { n: 13.4, focus: sun, V: vPog, up: upPog, sx: 0.07, sy: 0.04 },
+    { n: 27, focus: sun, V: vPog, up: upPog, sx: 0.07, sy: 0.04 },
   ];
 
   return function pose(n: number): CamPose {

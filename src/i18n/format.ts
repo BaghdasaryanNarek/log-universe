@@ -1,7 +1,16 @@
-import { FACTS, type FactId, type Fmt } from '../content/facts.ts';
+﻿import { FACTS, type FactId, type Fmt } from '../content/facts.ts';
 
 export type Lang = 'hy' | 'ru' | 'en';
 export const LOCALES: Record<Lang, string> = { hy: 'hy-AM', ru: 'ru-RU', en: 'en-GB' };
+
+/**
+ * Не во всех сборках Chromium есть данные ICU для hy. Разделители в армянской норме CLDR
+ * те же, что в русской (десятичная запятая, неразрывный пробел между группами),
+ * поэтому при отсутствии hy числа форматируем по ru-RU — результат идентичен.
+ */
+const HY_OK = (() => { try { return Intl.NumberFormat.supportedLocalesOf(['hy-AM']).length > 0 && new Intl.NumberFormat('hy-AM').format(1.5) === '1,5'; } catch { return false; } })();
+const numLocale = (l: Lang) => (l === 'hy' && !HY_OK ? 'ru-RU' : LOCALES[l]);
+const HY_MONTHS = ['հունվարի', 'փետրվարի', 'մարտի', 'ապրիլի', 'մայիսի', 'հունիսի', 'հուլիսի', 'օգոստոսի', 'սեպտեմբերի', 'հոկտեմբերի', 'նոյեմբերի', 'դեկտեմբերի'];
 
 const SUP: Record<string, string> = {
   '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '-': '⁻', '−': '⁻',
@@ -13,7 +22,7 @@ function nf(lang: Lang, min: number, max: number, group = true): Intl.NumberForm
   const k = `${lang}|${min}|${max}|${group}`;
   let f = nfCache.get(k);
   if (!f) {
-    f = new Intl.NumberFormat(LOCALES[lang], { minimumFractionDigits: min, maximumFractionDigits: max, useGrouping: group });
+    f = new Intl.NumberFormat(numLocale(lang), { minimumFractionDigits: min, maximumFractionDigits: max, useGrouping: group });
     nfCache.set(k, f);
   }
   return f;
@@ -67,5 +76,7 @@ export function fmtFact(id: FactId, lang: Lang, unitLabel: (u: string) => string
 }
 
 export function fmtDate(d: Date, lang: Lang): string {
-  return new Intl.DateTimeFormat(LOCALES[lang], { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+  // армянская норма: «15 նոյեմբերի, 2026 թ.» (дата в Ереване, UTC+4)
+  if (lang === 'hy') { const y = new Date(d.getTime() + 4 * 3600e3); return `${y.getUTCDate()} ${HY_MONTHS[y.getUTCMonth()]}, ${y.getUTCFullYear()} թ.`; }
+  return new Intl.DateTimeFormat(LOCALES[lang], { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Yerevan' }).format(d);
 }

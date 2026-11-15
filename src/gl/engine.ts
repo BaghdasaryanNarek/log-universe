@@ -1,5 +1,16 @@
-import * as THREE from 'three';
-import { BloomEffect, EffectComposer, EffectPass, NoiseEffect, RenderPass, VignetteEffect, BlendFunction } from 'postprocessing';
+﻿import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+
+/** Виньетка в линейном пространстве — края кадра темнее, как в объективе. */
+const VignetteShader = {
+  uniforms: { tDiffuse: { value: null }, uStrength: { value: 0.42 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: 'uniform sampler2D tDiffuse; uniform float uStrength; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); vec2 d = vUv - 0.5; float v = 1.0 - uStrength * smoothstep(0.25, 0.85, dot(d, d) * 2.2); gl_FragColor = vec4(c.rgb * v, c.a); }',
+};
 import type { V3 } from '../core/vec.ts';
 import { dot, sub } from '../core/vec.ts';
 import { HFOV, type CamPose } from './rig.ts';
@@ -12,7 +23,7 @@ export class Engine {
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
   private composer: EffectComposer;
-  private bloom: BloomEffect;
+  private bloom: UnrealBloomPass;
   private layers: Layer[] = [];
   private basis = new THREE.Matrix4();
   private tmp = new THREE.Vector3();
@@ -23,16 +34,31 @@ export class Engine {
 
   constructor(readonly canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, stencil: false, alpha: false, powerPreference: 'high-performance' });
-    this.renderer.setClearColor('#07080c', 1);
+    // Очистка чёрным, а «чернила» #07080c — отдельным фоновым проходом через шейдер:
+    // цвет очистки в цепочке HalfFloat → OutputPass не линеаризуется и давал серое небо (~#343440).
+    this.renderer.setClearColor(0x000000, 1);
+    const bg = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.ShaderMaterial({
+        uniforms: { uInk: { value: new THREE.Color('#07080c') } },
+        vertexShader: 'void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }',
+        fragmentShader: 'uniform vec3 uInk; void main(){ gl_FragColor = vec4(uInk, 1.0); }',
+        depthTest: false, depthWrite: false,
+      }),
+    );
+    bg.frustumCulled = false;
+    bg.renderOrder = -10;
+    this.scene.add(bg);
+
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.camera = new THREE.PerspectiveCamera(30, 16 / 9, 1e-4, 1e5);
-    this.composer = new EffectComposer(this.renderer, { frameBufferType: THREE.HalfFloatType, multisampling: 4 });
+    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
+    this.composer = new EffectComposer(this.renderer, rt);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.bloom = new BloomEffect({ luminanceThreshold: 0.42, luminanceSmoothing: 0.25, intensity: 0.85, mipmapBlur: true, radius: 0.62 });
-    const vignette = new VignetteEffect({ offset: 0.3, darkness: 0.5 });
-    const noise = new NoiseEffect({ blendFunction: BlendFunction.OVERLAY, premultiply: true });
-    noise.blendMode.opacity.value = 0.18;
-    this.composer.addPass(new EffectPass(this.camera, this.bloom, vignette, noise));
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.55, 0.55, 0.5);
+    this.composer.addPass(this.bloom);
+    this.composer.addPass(new ShaderPass(VignetteShader));
+    this.composer.addPass(new OutputPass());
     this.resize();
   }
 
@@ -42,8 +68,8 @@ export class Engine {
     if (t === this.tier) return;
     this.tier = t;
     this.dprCap = t === 'high' ? 1.5 : t === 'med' ? 1.25 : 0.85;
-    this.bloom.intensity = t === 'low' ? 0 : 0.85;
-    this.composer.multisampling = t === 'high' ? 4 : t === 'med' ? 2 : 0;
+    this.bloom.enabled = t !== 'low';
+    this.composer.renderTarget1.samples = this.composer.renderTarget2.samples = t === 'high' ? 4 : t === 'med' ? 2 : 0;
     this.resize();
   }
 
@@ -52,7 +78,8 @@ export class Engine {
     const dpr = Math.min(window.devicePixelRatio || 1, this.dprCap);
     this.renderer.setPixelRatio(dpr);
     this.renderer.setSize(w, h, false);
-    this.composer.setSize(w, h, false);
+    this.composer.setPixelRatio(dpr);
+    this.composer.setSize(w, h);
     this.camera.aspect = w / h;
     this.camera.fov = (2 * Math.atan(Math.tan(HFOV / 2) / this.camera.aspect) * 180) / Math.PI;
     this.camera.updateProjectionMatrix();

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="hy">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="theme-color" content="#07080c" />
+    <title>Մեր տեղն աստղերի մեջ</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307080c'/%3E%3Cpath d='M16 16m0 0c1 0 1.6 1 1.2 1.9-.6 1.4-2.6 1.6-3.6.5-1.6-1.6-.9-4.3 1.1-5.2 2.8-1.2 5.9.6 6.4 3.6.6 4-2.6 7.5-6.6 7.5-5.1 0-8.7-4.8-7.8-9.7 1.1-6.1 7.4-9.9 13.3-8.2' fill='none' stroke='%23e8b04b' stroke-width='1.6'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <a class="skip" href="#beats" data-i18n="a11y.skip"></a>
+
+    <div id="preloader" role="status" aria-live="polite">
+      <div class="pre-wrap">
+        <div class="pre-top"><span data-i18n="pre.label"></span><span data-i18n="pre.sub"></span></div>
+        <div class="pre-num" aria-hidden="true">10<sup id="pre-exp">⁰</sup></div>
+        <div class="pre-ruler" aria-hidden="true"><svg id="pre-svg" preserveAspectRatio="none" viewBox="0 0 270 26"></svg></div>
+        <div class="pre-bottom"><span id="pre-pct">0 %</span><span>log₁₀ = 27 · p</span></div>
+      </div>
+    </div>
+
+    <canvas id="gl" role="img" data-i18n-aria="a11y.canvas"></canvas>
+    <div id="labels" aria-hidden="true"></div>
+    <div class="bignum" aria-hidden="true">10<sup id="bignum-exp">⁰</sup></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="-12 -12 24 24"><path id="brand-spiral" fill="none" stroke="currentColor" stroke-width="1.1" vector-effect="non-scaling-stroke"/></svg>
+        </span>
+        <span class="brand-text"><span class="brand-title" data-i18n="meta.title"></span><span class="brand-sub" data-i18n="brand.sub"></span></span>
+      </div>
+      <nav class="lang" role="group" data-i18n-aria="a11y.langGroup">
+        <button type="button" data-lang="hy" lang="hy" data-i18n-title="lang.hy">HY</button>
+        <button type="button" data-lang="ru" lang="ru" data-i18n-title="lang.ru">RU</button>
+        <button type="button" data-lang="en" lang="en" data-i18n-title="lang.en">EN</button>
+      </nav>
+    </header>
+
+    <aside class="hud" data-i18n-aria="hud.title"></aside>
+
+    <p class="nogl-note" data-i18n="nogl"></p>
+    <main id="beats" tabindex="-1"></main>
+
+    <div class="beat-ind" aria-live="polite"><b id="beat-num">01</b><span id="beat-name"></span></div>
+    <div class="hint" id="hint" data-i18n="hint.nav"></div>
+    <div id="star-tip" role="tooltip"></div>
+
+    <div id="help" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+      <div class="help-card">
+        <h2 id="help-title" data-i18n="keys.title"></h2>
+        <dl>
+          <dt><kbd>→</kbd> <kbd>PgDn</kbd> <kbd>Space</kbd></dt><dd data-i18n="keys.next"></dd>
+          <dt><kbd>←</kbd> <kbd>PgUp</kbd> <kbd>⇧ Space</kbd></dt><dd data-i18n="keys.prev"></dd>
+          <dt><kbd>Home</kbd> <kbd>End</kbd></dt><dd data-i18n="keys.home"></dd>
+          <dt><kbd>1</kbd>–<kbd>9</kbd></dt><dd data-i18n="keys.digits"></dd>
+          <dt><kbd>F</kbd></dt><dd data-i18n="keys.full"></dd>
+          <dt><kbd>L</kbd></dt><dd data-i18n="keys.lang"></dd>
+          <dt><kbd>K</kbd></dt><dd data-i18n="keys.boost"></dd>
+          <dt><kbd>B</kbd> <kbd>.</kbd></dt><dd data-i18n="keys.black"></dd>
+          <dt><kbd>H</kbd> <kbd>?</kbd></dt><dd data-i18n="keys.help"></dd>
+          <dt><kbd>Esc</kbd></dt><dd data-i18n="keys.esc"></dd>
+        </dl>
+        <button type="button" class="help-close" data-i18n="keys.close"></button>
+      </div>
+    </div>
+
+    <div id="fade" aria-hidden="true"></div>
+    <div id="blackout" aria-hidden="true"></div>
+    <div id="debug" aria-hidden="true"></div>
+    <div id="cursor" aria-hidden="true"><span class="c-ring"></span><span class="c-cross"></span></div>
+    <div id="scroll-spacer" aria-hidden="true"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

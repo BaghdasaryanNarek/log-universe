@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Подмножества шрифтов → src/assets/fonts/*.woff2 (вариативные оси сохраняются).
  * Наборы символов заданы диапазонами и дополнительно включают все символы
  * из словарей i18n, поэтому новые строки не превратятся в «квадратики».
@@ -11,7 +11,7 @@ const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i)
 const LATIN = range(0x20, 0x7e) + range(0xa0, 0xff) + 'ıŒœˆ˚˜';
 const CYR = range(0x400, 0x45f) + 'Ґґ';
 const GREEK = range(0x391, 0x3c9);
-const PUNCT = range(0x2010, 0x2027) + range(0x2030, 0x203a) + '⁄€№';
+const PUNCT = range(0x2000, 0x2027) + range(0x2030, 0x203a) + '⁄€№';
 const SUPSUB = range(0x2070, 0x209f);
 const MATH = '←↑→↓↔−∕∙√∞≈≠≤≥±×÷·′″°ℓ∅∑∂Δ∆';
 const ARM = range(0x531, 0x58f) + range(0xfb13, 0xfb17) + '  ';

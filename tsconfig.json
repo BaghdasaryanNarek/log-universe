@@ -1,4 +1,4 @@
-{
+﻿{
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
@@ -12,7 +12,6 @@
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
-    "erasableSyntaxOnly": true,
     "skipLibCheck": true,
     "noEmit": true
   },

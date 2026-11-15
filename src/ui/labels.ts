@@ -1,4 +1,4 @@
-import type { V3 } from '../core/vec.ts';
+﻿import type { V3 } from '../core/vec.ts';
 import { smoothstep } from '../core/vec.ts';
 import type { Engine } from '../gl/engine.ts';
 
@@ -36,6 +36,8 @@ export class Labels {
   relocalize() { for (const it of this.items) { it.txt.textContent = it.def.text(); it.last = ''; } }
 
   update(n: number, scale: number) {
+    // подпись не должна оказываться под текстом/инструментом активной остановки
+    const occ = document.querySelector('.beat.is-active .beat-inner')?.getBoundingClientRect();
     for (const it of this.items) {
       const [a, b] = it.def.range;
       const op = smoothstep(a, a + 0.35, n) * (1 - smoothstep(b - 0.35, b, n));
@@ -43,6 +45,7 @@ export class Labels {
       const p = this.engine.project(it.def.target);
       if (!p || p.x < -50 || p.y < -50 || p.x > innerWidth + 50 || p.y > innerHeight + 50) { it.el.style.opacity = '0'; continue; }
       const dx = it.def.off[0] * scale, dy = it.def.off[1] * scale;
+      if (occ && p.x > occ.left - 40 && p.x < occ.right + 24 &&p.y > occ.top - 30 && p.y < occ.bottom + 30) { it.el.style.opacity = '0'; continue; }
       it.el.style.opacity = op.toFixed(3);
       it.el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
       const box = it.el.querySelector<HTMLElement>('.label-box')!;
