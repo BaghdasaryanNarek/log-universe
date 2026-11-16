@@ -61,7 +61,8 @@ async function fetchWithProgress(url: string, onProgress: (p: number) => void): 
 
 /** Цвет звезды из показателя B−V: температура по Ballesteros (2012), затем приближение Хелланда. */
 export function bvToRgb(bv: number): [number, number, number] {
-  const b = Math.max(-0.4, Math.min(2.0, bv));
+  // −9 — «нет данных о цвете»: рисуем как звезду солнечного цвета
+  const b = bv < -5 ? 0.65 : Math.max(-0.4, Math.min(2.0, bv));
   const T = 4600 * (1 / (0.92 * b + 1.7) + 1 / (0.92 * b + 0.62));
   const t = T / 100;
   let r: number, g: number, bl: number;

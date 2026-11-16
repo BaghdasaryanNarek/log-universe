@@ -55,9 +55,10 @@ export function earthHelio(date: Date): V3 {
   const n = julianDate(date) - 2451545.0;
   const L = (280.46 + 0.9856474 * n) * DEG;
   const g = (357.528 + 0.9856003 * n) * DEG;
-  const lam = L + (1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * DEG;
+  // долгота эпохи даты → J2000 (каталог звёзд и элементы JPL — в J2000): общая прецессия 1,397°/век
+  const lam = L + (1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * DEG - 1.397 * DEG * (n / 36525);
   const R = (1.00014 - 0.01671 * Math.cos(g) - 0.00014 * Math.cos(2 * g)) * AU;
-  const eps = (23.439 - 0.0000004 * n) * DEG;
+  const eps = 23.4393 * DEG; // J2000
   // геоцентрическое Солнце → гелиоцентрическая Земля = минус
   return [-R * Math.cos(lam), -R * Math.cos(eps) * Math.sin(lam), -R * Math.sin(eps) * Math.sin(lam)];
 }
@@ -68,3 +69,26 @@ export const EQ_TO_GAL: [V3, V3, V3] = [
   [0.4941094279, -0.4448296300, 0.7469822445],
   [-0.8676661490, -0.1980763734, 0.4559837762],
 ];
+
+
+/** Геоцентрическое положение Луны, м (экваториальные; формулы низкой точности, ~0,3°, ~1000 км). */
+export function moonGeo(date: Date): V3 {
+  const d = julianDate(date) - 2451545.0;
+  const Lp = (218.316 + 13.176396 * d) * DEG;
+  const Mp = (134.963 + 13.064993 * d) * DEG;
+  const F = (93.272 + 13.22935 * d) * DEG;
+  const lam = Lp + 6.289 * DEG * Math.sin(Mp);
+  const bet = 5.128 * DEG * Math.sin(F);
+  const r = (385001 - 20905 * Math.cos(Mp)) * 1000;
+  const eps = 23.4393 * DEG;
+  const x = r * Math.cos(bet) * Math.cos(lam);
+  const y = r * Math.cos(bet) * Math.sin(lam);
+  const z = r * Math.sin(bet);
+  return [x, y * Math.cos(eps) - z * Math.sin(eps), y * Math.sin(eps) + z * Math.cos(eps)];
+}
+
+/** Единичный вектор по прямому восхождению и склонению (градусы). */
+export const radec = (raDeg: number, decDeg: number): V3 => {
+  const a = raDeg * DEG, b = decDeg * DEG;
+  return [Math.cos(b) * Math.cos(a), Math.cos(b) * Math.sin(a), Math.sin(b)];
+};

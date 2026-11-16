@@ -11,6 +11,8 @@ export interface LabelDef {
   range: [number, number];
   /** смещение текста от точки, px при 1080p */
   off: [number, number];
+  /** пульсирующая точка (цефеида) */
+  pulse?: boolean;
 }
 
 /**
@@ -25,7 +27,7 @@ export class Labels {
     this.root.innerHTML = '';
     this.items = defs.map((def) => {
       const el = document.createElement('div');
-      el.className = 'label';
+      el.className = def.pulse ? 'label is-pulse' : 'label';
       el.innerHTML = `<span class="label-lead"></span><span class="label-dot"></span><span class="label-box"><span class="label-t"></span>${def.sub ? '<span class="label-s"></span>' : ''}</span>`;
       this.root.appendChild(el);
       return { def, el, txt: el.querySelector('.label-t')!, sub: el.querySelector('.label-s'), lead: el.querySelector('.label-lead')!, last: '' };

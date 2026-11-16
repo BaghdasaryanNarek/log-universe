@@ -5,3 +5,4 @@ assets-src/hyg/*.csv
 shots/
 *.log
 .DS_Store
+assets-src/nasa/*.jpg

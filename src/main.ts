@@ -1,16 +1,23 @@
-﻿import 'katex/dist/katex.min.css';
+import 'katex/dist/katex.min.css';
 import 'lenis/dist/lenis.css';
 import './styles/main.css';
 import { gsap } from 'gsap';
 import { applyDocument, lang, LANGS, onLang, setLang, t } from './i18n/index.ts';
 import { fmtDate, fmtMag, fmtNum } from './i18n/format.ts';
 import { BEATS } from './content/scenes.ts';
-import { PC, LY, SUN_ABS_MAG } from './content/facts.ts';
-import { add, mul, type V3 } from './core/vec.ts';
+import { PC, LY, KPC, SUN_ABS_MAG } from './content/facts.ts';
+import { add, mul, norm, sub, cross, type V3 } from './core/vec.ts';
+import * as THREE from 'three';
+import { SolarLayer } from './scenes/solar/solar-layer.ts';
+import { GalaxyLayer } from './scenes/galaxy/galaxy-layer.ts';
+import { MILKY_WAY, ANDROMEDA } from './scenes/galaxy/generate.ts';
+import { CosmosLayer } from './scenes/cosmos/web-layer.ts';
+import { LogMap, type MapPoint, type MapLabel } from './ui/logmap.ts';
+import { hrAxes, napierPage, sourcesHtml, varPlate } from './ui/extras.ts';
 import { LogScroll } from './core/scroll.ts';
 import { Engine, QualityGovernor } from './gl/engine.ts';
 import { createRig } from './gl/rig.ts';
-import { EARTH_R, earthHelio, gmst, heroDate, julianDate, observerFrame, toAltAz } from './gl/astro.ts';
+import { EARTH_R, EQ_TO_GAL, earthHelio, gmst, heroDate, julianDate, moonGeo, observerFrame, radec, toAltAz } from './gl/astro.ts';
 import { loadCatalog } from './scenes/stars/catalog.ts';
 import { StarsLayer } from './scenes/stars/stars-layer.ts';
 import { ConstellationLayer } from './scenes/stars/constellations.ts';
@@ -111,6 +118,8 @@ async function main() {
   const fontsP = pre.task('fonts', 3);
   const starsP = pre.task('stars', 4);
   const glP = pre.task('gl', 3);
+  const texP = pre.task('tex', 2);
+  const extra = (id: 'napier' | 'var' | 'hr') => (id === 'napier' ? napierPage() : id === 'var' ? varPlate() : hrAxes());
 
   const fontJobs = ['400 1em "Garamond 1614"', 'italic 400 1em "Garamond 1614"', '400 1em "Plex Mono 1614"', '500 1em "Plex Mono 1614"'];
   let fdone = 0;
@@ -134,16 +143,28 @@ async function main() {
   /* ── без WebGL: статичная страница со всем текстом и инструментом ── */
   if (!gl) {
     root.classList.add('no-gl');
-    starsP(1); glP(1);
+    starsP(1); glP(1); texP(1);
     await fonts;
-    const beats = new BeatsController(document.getElementById('beats')!, { mountTool: (_b, slot) => slot.appendChild(tool.el) }, true);
+    const beats = new BeatsController(document.getElementById('beats')!, {
+      mountTool: (b, slot) => { if (b.tool === 'compare') slot.appendChild(tool.el); },
+      extra: (id) => (id === 'hr' ? '' : extra(id)),
+      sources: sourcesHtml,
+    }, true);
     beats.renderStatic();
     onLang(() => { applyDocument(); beats.renderStatic(); });
     await pre.done();
     return;
   }
 
-  const cat = await loadCatalog(BASE, starsP);
+  const loader = new THREE.TextureLoader();
+  let texDone = 0;
+  const loadTex = (u: string) => loader.loadAsync(`${BASE}textures/${u}`).then((tx) => {
+    tx.colorSpace = THREE.SRGBColorSpace;
+    tx.anisotropy = 4;
+    texP(++texDone / 2);
+    return tx;
+  });
+  const [cat, earthDay, earthNight] = await Promise.all([loadCatalog(BASE, starsP), loadTex('earth-day.webp'), loadTex('earth-night.webp')]);
   cat.absMag[0] = SUN_ABS_MAG;
 
   /* ── астрономия кадра: Ереван, сегодня, 22:00 ── */
@@ -157,7 +178,23 @@ async function main() {
   const mizarDir = dirOf(mizarI);
   const mz = toAltAz(frame, mizarDir);
   const alphaI = cat.find('Rigil Kentaurus');
-  const rig = createRig({ frame, telescope, mizarDir, alphaCen: cat.posM(alphaI) });
+  const moonAbs = add(earth, moonGeo(date));
+  // Галактика: оси — строки матрицы «экватор → галактика» (Hipparcos), центр на 8,2 кпк (GRAVITY 2019)
+  const gcDir = EQ_TO_GAL[0], ngp = EQ_TO_GAL[2];
+  const gc: V3 = mul(gcDir, 8.2 * KPC);
+  const m31Dir = radec(10.68471, 41.26875);
+  const m31: V3 = mul(m31Dir, 2.5e6 * LY);
+  const rig = createRig({ frame, eye: telescope, mizarDir, alphaCen: cat.posM(alphaI), earth, moon: moonAbs, gc, ngp, m31 });
+  // оси диска Млечного Пути: e1 — от центра к Солнцу, e3 — к северному полюсу Галактики
+  const mwE1 = norm(mul(gcDir, -1)), mwE3 = ngp, mwE2 = cross(mwE3, mwE1);
+  // Андромеда: позиционный угол большой оси 38°, наклон диска 77°
+  const north = norm(sub([0, 0, 1], mul(m31Dir, m31Dir[2])));
+  const east = norm(cross([0, 0, 1], m31Dir));
+  const pa = (38 * Math.PI) / 180, inc = (77 * Math.PI) / 180;
+  const major = norm(add(mul(north, Math.cos(pa)), mul(east, Math.sin(pa))));
+  const minor = norm(add(mul(north, -Math.sin(pa)), mul(east, Math.cos(pa))));
+  const m31E3 = norm(add(mul(m31Dir, Math.cos(inc)), mul(minor, Math.sin(inc))));
+  const m31E2 = cross(m31E3, major);
 
   const canvas = document.getElementById('gl') as HTMLCanvasElement;
   const engine = new Engine(canvas);
@@ -166,9 +203,18 @@ async function main() {
   engine.add(new MilkyWayLayer());
   engine.add(stars);
   engine.add(new ConstellationLayer(cat));
-  engine.add(new EarthPass(earth, gmst(julianDate(date))));
+  engine.add(new EarthPass(earth, gmst(julianDate(date)), { day: earthDay, night: earthNight }));
   { const a = ((mz.az - 9 + 17) * Math.PI) / 180; setTelescopeOffset(Math.sin(a) * 4.6, Math.cos(a) * 4.6); }
   engine.add(new HorizonLayer(obs, frame, mz.az, mz.alt));
+  const solar = new SolarLayer(date, earth);
+  engine.add(solar);
+  const mw = new GalaxyLayer({ ...MILKY_WAY, count: 150000 }, { center: gc, e1: mwE1, e2: mwE2, e3: mwE3, range: [18.7, 28.4], gain: 0.42 });
+  const andromeda = new GalaxyLayer({ ...ANDROMEDA, count: 90000 }, { center: m31, e1: major, e2: m31E2, e3: m31E3, range: [20.9, 28.4], gain: 0.7 });
+  engine.add(mw);
+  engine.add(andromeda);
+  const cosmos = new CosmosLayer();
+  engine.add(cosmos);
+  engine.onTier = (tier) => { const q = tier === 'high' ? 1 : tier === 'med' ? 0.55 : 0.3; mw.setQuality(q); andromeda.setQuality(q); };
   glP(0.3);
   engine.render(0, rig(0), 0);
   await engine.warmup();
@@ -191,27 +237,63 @@ async function main() {
   labels.set([
     { key: 'you', text: () => t('label.you'), target: add(obs, mul(frame.zenith, 1.6)), range: [0.55, 3.6], off: [-70, -50] },
     { key: 'mizar', text: () => t('label.mizar'), sub: () => t('label.mizarNote'), target: mul(mizarDir, 1e22), range: [-1, 2.6], off: [-46, -40] },
-    { key: 'sun', text: () => t('label.sun'), sub: live(0), target: [0, 0, 0], range: [13.2, 27.5], off: [54, 44] },
-    { key: 'acen', text: () => t('label.alphacen'), sub: live(alphaI), target: cat.posM(alphaI), range: [15.4, 18.6], off: [-56, -48] },
-    { key: 'prox', text: () => t('label.proxima'), sub: live(cat.find('Proxima Centauri')), target: cat.posM(cat.find('Proxima Centauri')), range: [15.6, 18.3], off: [-64, 46] },
-    { key: 'sirius', text: () => t('label.sirius'), sub: live(cat.find('Sirius')), target: cat.posM(cat.find('Sirius')), range: [15.8, 18.6], off: [50, -40] },
-    { key: 'barnard', text: () => t('label.barnard'), sub: live(cat.find("Barnard's Star")), target: cat.posM(cat.find("Barnard's Star")), range: [15.8, 18.4], off: [50, 40] },
+    { key: 'sun', text: () => t('label.sun'), sub: live(0), target: [0, 0, 0], range: [13.2, 20.6], off: [54, 44] },
+    { key: 'acen', text: () => t('label.alphacen'), sub: live(alphaI), target: cat.posM(alphaI), range: [15.4, 17.6], off: [-56, -48] },
+    { key: 'prox', text: () => t('label.proxima'), sub: live(cat.find('Proxima Centauri')), target: cat.posM(cat.find('Proxima Centauri')), range: [15.6, 17.6], off: [-64, 46] },
+    { key: 'sirius', text: () => t('label.sirius'), sub: live(cat.find('Sirius')), target: cat.posM(cat.find('Sirius')), range: [15.8, 17.6], off: [50, -40] },
+    { key: 'barnard', text: () => t('label.barnard'), sub: live(cat.find("Barnard's Star")), target: cat.posM(cat.find("Barnard's Star")), range: [15.8, 17.6], off: [50, 40] },
+    { key: 'moon', text: () => t('obj.moon'), target: moonAbs, range: [8.2, 10.2], off: [46, -38] },
+    { key: 'earth', text: () => t('obj.earth'), sub: () => t('map.you'), target: earth, range: [8.2, 13.2], off: [-52, 40] },
+    ...(['mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'] as const).map((id) => ({
+      key: id, text: () => t(`obj.${id}`), target: solar.positions[id],
+      range: (['mercury', 'venus', 'mars'].includes(id) ? [11.0, 12.6] : [11.9, 13.8]) as [number, number],
+      off: [34, -26] as [number, number],
+    })),
+    { key: 'mwsun', text: () => t('mw.sun'), target: [0, 0, 0], range: [19.8, 21.8], off: [60, 46] },
+    { key: 'gc', text: () => t('mw.center'), target: gc, range: [19.8, 22.3], off: [70, -56] },
+    { key: 'mw2', text: () => t('m31.mw'), target: gc, range: [22.6, 24.2], off: [-60, 50] },
+    { key: 'm31', text: () => t('m31.label'), target: m31, range: [21.6, 24.2], off: [120, -150] },
+    { key: 'v1', text: () => t('m31.v1'), sub: () => t('m31.v1note'), target: andromeda.worldOf(-8.5, 4.5), range: [21.65, 22.4], off: [58, 44], pulse: true },
+    { key: 'virgo', text: () => t('uni.virgo'), target: cosmos.virgo, range: [23.4, 25.0], off: [56, -44] },
   ]);
+
+  /* ── финальная карта: настоящие направления, радиус ∝ log₁₀ расстояния от Земли ── */
+  const mapPts: MapPoint[] = [];
+  const lg = (v: V3) => Math.log10(Math.hypot(...v));
+  const rel = (q: V3) => sub(q, earth);
+  mapPts.push({ log: lg(rel(moonAbs)), dir: norm(rel(moonAbs)), kind: 'moon' });
+  mapPts.push({ log: lg(rel([0, 0, 0])), dir: norm(rel([0, 0, 0])), kind: 'sun' });
+  for (const id of ['mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune']) mapPts.push({ log: lg(rel(solar.positions[id])), dir: norm(rel(solar.positions[id])), kind: 'planet' });
+  for (let i = 1; i < cat.count; i++) { const q = cat.posM(i); mapPts.push({ log: lg(q), dir: norm(q), kind: 'star' }); }
+  for (const g of [mw, andromeda]) for (const q of g.sampleWorld(3000)) mapPts.push({ log: lg(q), dir: norm(q), kind: 'gal' });
+  for (const q of cosmos.sampleWorld(5000)) mapPts.push({ log: lg(q), dir: norm(q), kind: 'web' });
+  const mapLabels: MapLabel[] = [
+    { log: lg(rel(moonAbs)), dir: norm(rel(moonAbs)), key: 'obj.moon' },
+    { log: lg(rel([0, 0, 0])), dir: norm(rel([0, 0, 0])), key: 'label.sun' },
+    { log: lg(cat.posM(alphaI)), dir: norm(cat.posM(alphaI)), key: 'label.alphacen' },
+    { log: lg(gc), dir: norm(gc), key: 'mw.center' },
+    { log: lg(m31), dir: norm(m31), key: 'm31.label' },
+    { log: lg(cosmos.virgo), dir: norm(cosmos.virgo), key: 'uni.virgo' },
+    { log: Math.log10(4.4e26), dir: norm(sub(mul(m31Dir, -1), gcDir)), key: 'uni.cmb' },
+  ];
+  const logmap = new LogMap(document.getElementById('logmap') as HTMLCanvasElement, mapPts, mapLabels);
   const hint = document.getElementById('hint')!;
   const beatNum = document.getElementById('beat-num')!;
   const beatName = document.getElementById('beat-name')!;
 
   const beats = new BeatsController(document.getElementById('beats')!, {
-    mountTool: (_b, slot) => slot.appendChild(tool.el),
+    mountTool: (b, slot) => { if (b.tool === 'compare') slot.appendChild(tool.el); },
     heroExtra: () => t('hero.sky', { date: fmtDate(date, lang()), count: fmtNum(cat.count, lang(), 0) }),
+    extra,
+    sources: sourcesHtml,
   }, reduced);
 
   onLang(() => {
-    beats.relocalize(); hud.relocalize(); labels.relocalize();
+    beats.relocalize(); hud.relocalize(); labels.relocalize(); logmap.invalidate();
   });
 
   installKeys({
-    current: () => scroll.n,
+    current: () => scroll.p,
     fly,
     toggleFullscreen,
     cycleLang: () => setLang(LANGS[(LANGS.indexOf(lang()) + 1) % LANGS.length]),
@@ -274,12 +356,13 @@ async function main() {
     const now = performance.now();
     const dt = now - last; last = now;
     if (document.hidden) return;
-    const n = scroll.n;
-    engine.render(n, rig(n), (now - t0) / 1000);
+    const n = scroll.n, p = scroll.p;
+    engine.render(n, rig(n), (now - t0) / 1000, p);
     quality.tick(dt);
-    beats.update(n, scroll.flying, scroll.velocity);
+    beats.update(p, scroll.flying, scroll.velocity);
     const cur = beats.current;
-    hud.update(n, cur?.id ?? null);
+    hud.update(n, cur?.id ?? null, solar.inflation);
+    logmap.draw(engine.frame);
     labels.update(n, engine.frame.pxScale);
     cursor.tick();
     updateTip();
@@ -296,7 +379,7 @@ async function main() {
   if (import.meta.env.DEV || params.has('test')) {
     (window as unknown as { __lc: object }).__lc = {
       fly: (n: number) => new Promise<void>((r) => scroll.flyTo(n, r)),
-      get n() { return scroll.n; },
+      get n() { return scroll.p; },
       get beat() { return beats.current?.id ?? null; },
       fps: () => quality.fps,
       tier: () => engine.tier,
@@ -306,7 +389,7 @@ async function main() {
   await pre.done();
   // deep link: #b-pogson
   const target = BEATS.find((b) => `#b-${b.id}` === location.hash);
-  if (target) scroll.flyTo(target.n);
+  if (target) scroll.flyTo(target.p);
 }
 
 main().catch((e) => {

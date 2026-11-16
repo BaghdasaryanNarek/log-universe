@@ -64,9 +64,13 @@ export class Engine {
 
   add(layer: Layer) { this.layers.push(layer); this.scene.add(layer.object); }
 
+  /** слои с частицами подписываются, чтобы уменьшать число частиц на слабой графике */
+  onTier: (t: Tier) => void = () => {};
+
   setTier(t: Tier) {
     if (t === this.tier) return;
     this.tier = t;
+    this.onTier(t);
     this.dprCap = t === 'high' ? 1.5 : t === 'med' ? 1.25 : 0.85;
     this.bloom.enabled = t !== 'low';
     this.composer.renderTarget1.samples = this.composer.renderTarget2.samples = t === 'high' ? 4 : t === 'med' ? 2 : 0;
@@ -86,11 +90,11 @@ export class Engine {
   }
 
   /** Обновить все слои по позе камеры и нарисовать кадр. */
-  render(n: number, pose: CamPose, time: number) {
+  render(n: number, pose: CamPose, time: number, p = n) {
     const w = window.innerWidth, h = window.innerHeight;
     const dpr = this.renderer.getPixelRatio();
     this.frame = {
-      n, d: pose.d, cam: pose.cam, R: pose.R, U: pose.U, V: pose.V, time,
+      n, p, d: pose.d, cam: pose.cam, R: pose.R, U: pose.U, V: pose.V, time,
       width: w, height: h, dpr, pxScale: Math.max(0.6, Math.min(w / 1920, h / 1080)), reduced: this.reduced,
     };
     const { R, U, V } = pose;

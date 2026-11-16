@@ -1,7 +1,7 @@
-import Lenis from 'lenis';
+﻿import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { N_MAX } from '../content/scenes.ts';
+import { N_MAX, P_MAX } from '../content/scenes.ts';
 import { clamp } from './vec.ts';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -17,7 +17,8 @@ export const cinematic = (t: number) => (t < 0.5 ? 8 * t * t * t * t : 1 - Math.
 
 export class LogScroll {
   readonly lenis: Lenis;
-  n = 0;
+  /** положение на прокрутке в делениях (0…P_MAX) */
+  p = 0;
   flying = false;
   private flightEnd: (() => void) | null = null;
   private spacer: HTMLElement;
@@ -33,36 +34,38 @@ export class LogScroll {
       trigger: spacer,
       start: 'top top',
       end: () => `+=${this.journeyPx()}`,
-      onUpdate: (self) => { this.n = clamp(self.progress * N_MAX, 0, N_MAX); },
+      onUpdate: (self) => { this.p = clamp(self.progress * P_MAX, 0, P_MAX); },
     });
     window.addEventListener('resize', () => this.onResize());
   }
 
   decadePx() { return window.innerHeight * DECADE_VH; }
-  journeyPx() { return this.decadePx() * N_MAX; }
-  scrollFor(n: number) { return clamp(n, 0, N_MAX) * this.decadePx(); }
+  journeyPx() { return this.decadePx() * P_MAX; }
+  scrollFor(p: number) { return clamp(p, 0, P_MAX) * this.decadePx(); }
+  /** n = log₁₀ d: после 27 шкала заканчивается */
+  get n() { return Math.min(this.p, N_MAX); }
 
   private layout() {
     this.spacer.style.height = `${this.journeyPx() + window.innerHeight}px`;
   }
 
   private onResize() {
-    const n = this.n;
+    const p = this.p;
     this.layout();
     ScrollTrigger.refresh();
-    this.lenis.scrollTo(this.scrollFor(n), { immediate: true, force: true });
+    this.lenis.scrollTo(this.scrollFor(p), { immediate: true, force: true });
   }
 
   /** Перелёт к отметке n. Длительность растёт с числом пройденных порядков. */
   flyTo(n: number, onDone?: () => void): void {
-    const dn = Math.abs(n - this.n);
+    const dn = Math.abs(n - this.p);
     this.flightEnd?.();
     this.flying = true;
     const done = () => { this.flying = false; this.flightEnd = null; onDone?.(); };
     this.flightEnd = () => { this.flying = false; };
     if (this.reduced || dn < 1e-3) {
       this.lenis.scrollTo(this.scrollFor(n), { immediate: true, force: true, lock: true });
-      this.n = n;
+      this.p = n;
       requestAnimationFrame(done);
       return;
     }

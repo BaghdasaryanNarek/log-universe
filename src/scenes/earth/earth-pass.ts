@@ -1,4 +1,4 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import { fullscreenMesh, setRayUniforms } from '../../gl/fullscreen.ts';
 import { EARTH_R } from '../../gl/astro.ts';
 import { len, mul, norm, smoothstep, sub, type V3 } from '../../core/vec.ts';
@@ -24,6 +24,10 @@ uniform vec3 uAtmCol;
 uniform vec3 uInk;
 uniform vec3 uBrass;
 uniform float uSpace;
+uniform sampler2D tDay;
+uniform sampler2D tNight;
+uniform vec3 uSunDir;
+uniform float uTex;
 varying vec3 vRay;
 float gridLine(float x, float step) {
   float g = abs(fract(x / step + 0.5) - 0.5) * step;
@@ -50,7 +54,18 @@ void main() {
       float mu = clamp(dot(normalize(p), -ray), 0.0, 1.0);
       float g = max(gridLine(lat, 15.0), gridLine(lon, 15.0) * step(abs(lat), 75.0));
       float eq = gridLine(lat, 180.0);
-      col += uBrass * (g * 0.32 + eq * 0.25) * uGrat * (0.25 + 0.75 * mu);
+      if (uTex > 0.001) {
+        vec2 uv = vec2(lon / 360.0 + 0.5, lat / 180.0 + 0.5);
+        float sunC = dot(normalize(p), uSunDir);
+        float day = smoothstep(-0.08, 0.18, sunC);
+        vec3 albedo = texture2D(tDay, uv).rgb;
+        vec3 lights = texture2D(tNight, uv).rgb;
+        vec3 lit = albedo * (0.06 + 1.05 * max(sunC, 0.0));
+        vec3 night = pow(lights, vec3(1.25)) * vec3(1.2, 0.92, 0.55) * 1.8 + vec3(0.006, 0.009, 0.018);
+        vec3 surf = mix(night, lit, day) * (0.55 + 0.45 * mu);
+        col = mix(col, surf, uTex);
+      }
+      col += uBrass * (g * 0.32 + eq * 0.25) * uGrat * (0.25 + 0.75 * mu) * (1.0 - 0.6 * uTex);
     }
   }
   float x = ang - rho;
@@ -65,7 +80,7 @@ export class EarthPass implements Layer {
   object: THREE.Mesh;
   private mat: THREE.ShaderMaterial;
   private ecef = new THREE.Matrix3();
-  constructor(private center: V3, gmst: number) {
+  constructor(private center: V3, gmst: number, tex: { day: THREE.Texture; night: THREE.Texture }) {
     const { mesh, mat } = fullscreenMesh(FRAG, {
       uDirC: { value: new THREE.Vector3() },
       uCosRho: { value: 0 },
@@ -80,6 +95,10 @@ export class EarthPass implements Layer {
       uInk: { value: new THREE.Color('#050609') },
       uBrass: { value: new THREE.Color('#e8b04b') },
       uSpace: { value: 0 },
+      tDay: { value: tex.day },
+      tNight: { value: tex.night },
+      uSunDir: { value: new THREE.Vector3() },
+      uTex: { value: 0 },
     });
     this.object = mesh;
     this.mat = mat;
@@ -101,7 +120,10 @@ export class EarthPass implements Layer {
     (u.uC.value as THREE.Vector3).set(C[0], C[1], C[2]);
     u.uC2.value = ((D - EARTH_R) * (D + EARTH_R)) / (f.d * f.d);
     u.uRad.value = EARTH_R / f.d;
-    u.uGrat.value = smoothstep(5.2, 6.6, f.n);
+    u.uGrat.value = smoothstep(6.2, 7.2, f.n);
+    u.uTex.value = smoothstep(4.4, 5.4, f.n);
+    const sd = norm(mul(this.center, -1));
+    (u.uSunDir.value as THREE.Vector3).set(sd[0], sd[1], sd[2]);
     const H = 6e4;
     const inside = D < EARTH_R + H;
     const rho = Math.asin(Math.min(1, EARTH_R / D));

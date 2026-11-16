@@ -81,7 +81,7 @@ for (let i = 1; i < lines.length; i++) {
   const ciRaw = f[C.ci];
   stars.push({
     x: Number(f[C.x]), y: Number(f[C.y]), z: Number(f[C.z]),
-    M, ci: ciRaw === '' ? 0.65 : Number(ciRaw), name, hip: Number(f[C.hip]) || 0,
+    M, ci: ciRaw === '' ? -9 : Number(ciRaw), name, hip: Number(f[C.hip]) || 0,
     mag: m, dist: isSun ? 0 : dist, bayer: f[C.bayer] || '', con: f[C.con] || '',
   });
 }

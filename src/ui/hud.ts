@@ -1,4 +1,4 @@
-import { BEATS, MARGINALIA, N_MAX } from '../content/scenes.ts';
+﻿import { BEATS, MARGINALIA, N_MAX } from '../content/scenes.ts';
 import { t, tHtml, lang } from '../i18n/index.ts';
 import { fmtNum, fmtSci, fmtFact } from '../i18n/format.ts';
 
@@ -21,6 +21,9 @@ export class Hud {
   private lastExp = -1;
   private lastMarg = '';
   private h = 1;
+  private lastInfl = 1;
+  private honestEl!: HTMLElement;
+  private honestTxt!: HTMLElement;
 
   constructor(private root: HTMLElement, private onJump: (n: number) => void) {
     root.innerHTML = `
@@ -28,7 +31,7 @@ export class Hud {
         <div class="hud-log"><span class="hud-log-k">log<sub>10</sub>&thinsp;d</span><span class="hud-log-v" id="hud-log">0,00</span></div>
         <div class="hud-d">d ≈ <span id="hud-d"></span></div>
         <div class="hud-note" data-i18n="hud.dist"></div>
-        <div class="hud-honest"><span class="hud-honest-dot" aria-hidden="true"></span><span data-i18n="hud.honest"></span></div>
+        <div class="hud-honest"><span class="hud-honest-dot" aria-hidden="true"></span><span class="hud-honest-t"></span></div>
       </div>
       <div class="hud-scale">
         <svg class="hud-ruler" aria-hidden="true"></svg>
@@ -39,6 +42,9 @@ export class Hud {
     this.logEl = root.querySelector('#hud-log')!;
     this.dEl = root.querySelector('#hud-d')!;
     this.margEl = root.querySelector('#hud-marg')!;
+    this.honestEl = root.querySelector('.hud-honest')!;
+    this.honestTxt = root.querySelector('.hud-honest-t')!;
+    this.honestTxt.textContent = t('hud.honest');
     this.expEl = document.querySelector('#bignum-exp')!;
     this.pointer = document.createElementNS(SVG, 'g');
     this.build();
@@ -87,14 +93,15 @@ export class Hud {
     // отметки остановок — настоящие кнопки
     const marks = this.root.querySelector<HTMLElement>('.hud-marks')!;
     marks.innerHTML = '';
-    this.marks = BEATS.map((b) => {
+    this.marks = BEATS.filter((b) => b.p <= N_MAX).map((b) => {
       const btn = document.createElement('button');
       btn.className = 'hud-mark';
       btn.type = 'button';
-      btn.style.top = `${y(b.n)}px`;
-      btn.dataset.n = String(b.n);
+      btn.style.top = `${y(b.p)}px`;
+      btn.dataset.n = String(b.p);
+      btn.dataset.id = b.id;
       btn.innerHTML = `<span class="hud-mark-dia" aria-hidden="true"></span><span class="hud-mark-t"></span>`;
-      btn.addEventListener('click', () => this.onJump(b.n));
+      btn.addEventListener('click', () => this.onJump(b.p));
       marks.appendChild(btn);
       return btn;
     });
@@ -104,16 +111,23 @@ export class Hud {
 
   relocalize() {
     this.root.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n!); });
-    this.marks.forEach((m, i) => {
-      const b = BEATS[i];
+    this.marks.forEach((m) => {
+      const b = BEATS.find((x) => x.id === m.dataset.id)!;
       m.querySelector('.hud-mark-t')!.textContent = t(`beat.${b.id}`);
-      m.setAttribute('aria-label', `${t(`beat.${b.id}`)} — ${t('hud.jump', { n: fmtNum(b.n, lang(), 1) })}`);
+      m.setAttribute('aria-label', `${t(`beat.${b.id}`)} — ${t('hud.jump', { n: fmtNum(b.p, lang(), 1) })}`);
     });
     this.lastLog = '';
     this.lastMarg = '';
+    this.lastInfl = -1;
   }
 
-  update(n: number, activeBeat: string | null) {
+  update(n: number, activeBeat: string | null, inflation = 1) {
+    if (Math.abs(inflation - this.lastInfl) > 0.5 || (inflation <= 1.05) !== (this.lastInfl <= 1.05)) {
+      this.lastInfl = inflation;
+      const honest = inflation <= 1.05;
+      this.honestEl.classList.toggle('is-inflated', !honest);
+      this.honestTxt.textContent = honest ? t('hud.honest') : t('hud.inflated', { k: inflation < 100 ? fmtNum(Math.round(inflation), lang(), 0) : fmtSci(inflation, lang(), 0) });
+    }
     const y = this.h - (n / N_MAX) * this.h;
     this.pointer.setAttribute('transform', `translate(0 ${y.toFixed(2)})`);
     const L = lang();
@@ -131,7 +145,7 @@ export class Hud {
       void this.expEl.parentElement?.offsetWidth;
       this.expEl.parentElement?.classList.add('tick');
     }
-    this.marks.forEach((m) => m.classList.toggle('is-current', m.dataset.n === String(BEATS.find((b) => b.id === activeBeat)?.n)));
+    this.marks.forEach((m) => m.classList.toggle('is-current', m.dataset.id === activeBeat));
     // маргиналия: ближайшая подпись в пределах ±0,42 декады, если нет активного бита
     let html = '';
     if (!activeBeat) {

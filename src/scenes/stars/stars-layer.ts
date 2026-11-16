@@ -5,6 +5,8 @@ import type { Frame, Layer } from '../../gl/types.ts';
 import { bvToRgb, type StarCatalog } from './catalog.ts';
 
 export const SKY_R = 5e4;
+/** рамка диаграммы Г–Р в долях ширины кадра от центра (x) и долях половины высоты (y) */
+export const HR_BOX = { x0: 0.02, x1: 0.3, y: 0.62 };
 
 /**
  * Каждая звезда в каждом кадре:
@@ -16,6 +18,12 @@ const VERT = /* glsl */ `
 attribute float absMag;
 attribute vec3 color;
 attribute float sid;
+attribute float bv;
+uniform float uHR;
+uniform vec3 uHrR;
+uniform vec3 uHrU;
+uniform vec3 uHrV;
+uniform vec4 uHrBox;
 uniform vec3 uCamPc;
 uniform float uPcToUnit;
 uniform float uSkyR;
@@ -38,12 +46,23 @@ void main() {
   vec3 p = rel * uPcToUnit;
   float L = length(p);
   if (L > uSkyR) p *= uSkyR / L;
+  // диаграмма Г–Р: x — показатель цвета B−V, y — абсолютная величина M (сверху ярче)
+  float near = step(length(position), 300.0) * step(-5.0, bv);
+  float e = 0.0;
+  if (uHR > 0.0) {
+    float delay = fract(sid * 0.6180339) * 0.45;
+    e = smoothstep(0.0, 1.0, clamp((uHR - delay) / 0.55, 0.0, 1.0)) * near;
+    float hx = mix(uHrBox.x, uHrBox.y, clamp((bv + 0.4) / 2.4, 0.0, 1.0));
+    float hy = mix(uHrBox.z, uHrBox.w, clamp((16.0 - absMag) / 24.0, 0.0, 1.0));
+    vec3 target = uHrV + uHrR * hx + uHrU * hy;
+    p = mix(p, target, e);
+  }
   gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
-  bool hide = S <= 0.0 || (sid < 0.5 && uHideSun > 0.5);
+  bool hide = (S <= 0.0 && e < 0.01) || (sid < 0.5 && uHideSun > 0.5 && e < 0.01) || (uHR > 0.0 && near < 0.5 && uHR > 0.5);
   if (hide) { gl_PointSize = 0.0; gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   float tw = 1.0 + uTwinkle * 0.28 * sin(uTime * (2.3 + fract(sid * 0.6180339) * 4.1) + sid * 1.7);
-  vI = clamp(S / 3.2, 0.0, 1.0) * tw * uFade;
-  float r = 0.75 + 0.36 * max(S - 2.2, 0.0);
+  vI = mix(clamp(S / 3.2, 0.0, 1.0) * tw, 0.82, e) * uFade * (1.0 - (1.0 - near) * uHR);
+  float r = mix(0.75 + 0.36 * max(S - 2.2, 0.0), 0.95, e);
   vR = min(r, 26.0);
   vHover = abs(sid - uHover) < 0.5 ? 1.0 : 0.0;
   vColor = color;
@@ -72,6 +91,7 @@ void main() {
 export class StarsLayer implements Layer {
   object: THREE.Points;
   private mat: THREE.ShaderMaterial;
+  hr = 0;
   constructor(private cat: StarCatalog) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(cat.pos, 3));
@@ -87,6 +107,7 @@ export class StarsLayer implements Layer {
     }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
     g.setAttribute('sid', new THREE.BufferAttribute(sid, 1));
+    g.setAttribute('bv', new THREE.BufferAttribute(cat.ci, 1));
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT,
       fragmentShader: FRAG,
@@ -105,6 +126,11 @@ export class StarsLayer implements Layer {
         uTime: { value: 0 },
         uFade: { value: 1 },
         uHover: { value: -10 },
+        uHR: { value: 0 },
+        uHrR: { value: new THREE.Vector3() },
+        uHrU: { value: new THREE.Vector3() },
+        uHrV: { value: new THREE.Vector3() },
+        uHrBox: { value: new THREE.Vector4() },
       },
     });
     this.object = new THREE.Points(g, this.mat);
@@ -123,7 +149,16 @@ export class StarsLayer implements Layer {
     // мерцание — только сквозь атмосферу
     u.uTwinkle.value = f.reduced ? 0 : 1 - smoothstep(3.5, 5, f.n);
     // Солнце рисует отдельный слой вблизи; как звезда — только издалека
-    u.uHideSun.value = f.n < 12.5 ? 1 : 0;
+    u.uHideSun.value = f.n < 14.3 ? 1 : 0;
+    // Г–Р: окно бита 17,5…18,12; рамка — правая половина кадра (единицы рендера на расстоянии 1)
+    const hr = smoothstep(17.5, 17.78, f.p) * (1 - smoothstep(18.02, 18.3, f.p));
+    u.uHR.value = f.reduced ? (hr > 0.5 ? 1 : 0) : hr;
+    this.hr = u.uHR.value as number;
+    (u.uHrR.value as THREE.Vector3).set(...f.R);
+    (u.uHrU.value as THREE.Vector3).set(...f.U);
+    (u.uHrV.value as THREE.Vector3).set(...f.V);
+    const hh = (0.5 * f.height) / f.width;
+    (u.uHrBox.value as THREE.Vector4).set(HR_BOX.x0, HR_BOX.x1, -HR_BOX.y * hh, HR_BOX.y * hh);
     // на земле глаз адаптирован к ночному небу; в космосе без засветки предел чуть глубже
     u.uMagLim.value = 6.5 + 0.5 * smoothstep(4, 6, f.n);
   }

@@ -27,7 +27,7 @@ export const lang = () => current;
 export function t(key: string, params: Record<string, string | number> = {}): string {
   const raw = DICTS[current][key] ?? DICTS.ru[key] ?? key;
   return raw
-    .replace(/\{f:([a-zA-Z]+)\}/g, (_, id: string) =>
+    .replace(/\{f:([a-zA-Z0-9]+)\}/g, (_, id: string) =>
       id in FACTS ? fmtFact(id as FactId, current, (u) => t(`unit.${u}`)) : `{f:${id}}`)
     .replace(/\{(\w+)\}/g, (m, k: string) => (k in params ? String(params[k]) : m));
 }
@@ -37,10 +37,10 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 /** То же, что t(), но числа-факты оборачиваются в <span class="num" data-log>. */
 export function tHtml(key: string, params: Record<string, string | number> = {}): string {
   const raw = DICTS[current][key] ?? DICTS.ru[key] ?? key;
-  const parts = raw.split(/(\{f:[a-zA-Z]+\})/g);
+  const parts = raw.split(/(\{f:[a-zA-Z0-9]+\})/g);
   return parts
     .map((p) => {
-      const m = /^\{f:([a-zA-Z]+)\}$/.exec(p);
+      const m = /^\{f:([a-zA-Z0-9]+)\}$/.exec(p);
       if (m && m[1] in FACTS) {
         const id = m[1] as FactId;
         const f = FACTS[id] as { v: number; unit?: string };

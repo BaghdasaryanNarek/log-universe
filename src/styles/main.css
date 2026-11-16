@@ -1,4 +1,4 @@
-﻿@import './fonts.css';
+@import './fonts.css';
 
 /* ── Токены «Инструмент 1614». Пары цветов ≥ 7:1 к фону — проектор съедает контраст. ── */
 :root {
@@ -357,3 +357,78 @@ html.no-gl .nogl-note { display: block; margin: 0 var(--gutter); padding-top: 14
   .beat-inner, .beat--hero .beat-inner { width: calc(100vw - 2 * var(--gutter) - 70px); }
   .tool-slot { width: calc(100vw - 2 * var(--gutter) - 60px); }
 }
+
+/* ── Этап 2: вставки рядом с текстом ── */
+.beat-inner.is-wide { width: min(66vw, 1040px); }
+.beat-inner.is-wide .tool-slot { width: 100%; }
+.beat-extra { position: absolute; pointer-events: none; }
+
+/* страница «Canon» Непера: бумага и тушь — контрастно и на проекторе */
+.napier { right: calc(var(--gutter) + 120px); top: 58%; transform: translateY(-50%); width: min(24vw, 400px); margin: 0; }
+.napier .napier-page { font-size: clamp(12px, 1.5vh, 20px); }
+.napier-page {
+  background: #ece3cf; color: #1a140c; padding: 1.1em 1.3em 1.2em; font-size: var(--fs-small);
+  box-shadow: 0 0 0 1px #c9b98f inset, 0 0 0 7px #ece3cf, 0 0 0 8px #8a7650, 0 30px 80px rgba(0,0,0,.6);
+  font-variant-numeric: oldstyle-nums tabular-nums; transform: rotate(-1.2deg);
+}
+.napier-head { font-style: italic; text-align: center; font-size: .9em; letter-spacing: .02em; border-bottom: 1px solid #8a7650; padding-bottom: .45em; margin-bottom: .5em; }
+.napier table { width: 100%; border-collapse: collapse; font-size: .92em; }
+.napier th { font-weight: 400; font-style: italic; font-size: .85em; border-bottom: 1px solid #8a7650; padding: .15em .3em .35em; text-align: right; }
+.napier th span { font-size: .85em; }
+.napier td { text-align: right; padding: .08em .3em; }
+.napier td:first-child, .napier th:first-child { text-align: left; }
+.napier tr:first-child td { color: #7a2a12; }
+.napier-rule { height: 1px; background: #8a7650; margin-top: .5em; }
+.napier figcaption { margin-top: 1.2em; font-size: var(--fs-mono); font-family: var(--mono); color: var(--dim); text-shadow: 0 0 6px var(--ink); }
+
+/* пластинка «VAR!» — негатив, как у Хаббла (реконструкция) */
+.var-plate { right: calc(var(--gutter) + 90px); bottom: 9vh; width: min(22vw, 340px); margin: 0; }
+.var-plate svg { width: 100%; display: block; box-shadow: 0 0 0 1px #9c968a, 0 20px 60px rgba(0,0,0,.6); }
+.vp-bg { fill: #d8d4cb; }
+.vp-stars circle { fill: #15130f; }
+.vp-v1 { fill: #15130f; animation: cepheid 2.2s infinite; }
+.vp-ring { fill: none; stroke: #c4371b; stroke-width: 1.6; }
+.vp-ink { fill: none; stroke: #c4371b; stroke-width: 1.4; }
+.vp-var { font-family: var(--serif); font-style: italic; font-weight: 600; font-size: 34px; fill: #c4371b; transform: rotate(-6deg); transform-origin: 140px 60px; }
+.var-plate figcaption { font-family: var(--mono); font-size: var(--fs-mono); color: var(--dim); margin-top: .6em; }
+@keyframes cepheid { 0% { r: 3.6; } 18% { r: 3.8; } 100% { r: 1.6; } }
+
+/* оси диаграммы Г–Р — совмещены с рамкой, куда шейдер переносит звёзды */
+.hr-axes { position: fixed; }
+.hr-axes svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.hr-axes .ax { stroke: rgba(242,235,221,.55); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.hr-axes .tk { stroke: rgba(242,235,221,.6); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.hr-axes .tk-l { stroke: var(--brass); }
+.hr-axes .sun { fill: none; stroke: var(--signal); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.hr-axes span { position: absolute; font-family: var(--mono); font-size: var(--fs-mono); color: var(--paper-2); white-space: nowrap; }
+.hr-tx { top: calc(100% + 1.1em); transform: translateX(-50%); }
+.hr-ty { left: -.8em; transform: translate(-100%, -50%); }
+.hr-tl { left: calc(100% + 1em); transform: translateY(-50%); color: var(--brass-2) !important; }
+.hr-name { color: var(--dim) !important; }
+.hr-x { left: 50%; top: calc(100% + 2.6em); transform: translateX(-50%); }
+.hr-m { left: -2.6em; top: -1.6em; }
+.hr-l { right: -1em; top: -1.6em; color: var(--brass) !important; }
+.hr-reg { font-family: var(--serif) !important; font-style: italic; font-size: var(--fs-small) !important; color: var(--paper) !important; transform: translate(-50%, -50%); text-shadow: 0 0 8px var(--ink); }
+.hr-sun { transform: translate(14px, -130%) !important; color: var(--signal) !important; }
+
+/* пульсирующая цефеида */
+.label.is-pulse .label-dot { border-color: var(--signal); animation: pulse 2.2s infinite; }
+@keyframes pulse { 0% { transform: scale(1.6); box-shadow: 0 0 12px var(--signal); } 18% { transform: scale(1.8); } 100% { transform: scale(.8); box-shadow: 0 0 0 transparent; } }
+
+/* финальная карта */
+#logmap { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 4; pointer-events: none; visibility: hidden; opacity: 0; }
+
+/* источники */
+.beat--sources { pointer-events: auto; }
+.beat--sources .beat-inner { width: min(78vw, 1200px); top: 52%; pointer-events: auto; }
+.src-title { font-weight: 400; font-style: italic; font-size: calc(var(--fs-title) * .55); margin: 0 0 .2em; color: var(--brass-2); }
+.src-intro { color: var(--dim); font-size: var(--fs-small); margin: 0 0 1em; }
+.src-list { max-height: 62vh; overflow-y: auto; columns: 2; column-gap: 3em; padding-right: 1em; scrollbar-color: var(--brass) transparent; }
+.src-group { break-inside: avoid; margin-bottom: 1.2em; }
+.src-group h3 { font-family: var(--mono); font-weight: 500; font-size: var(--fs-mono); color: var(--brass); text-transform: uppercase; letter-spacing: .1em; margin: 0 0 .5em; }
+.src-group ol { margin: 0; padding-left: 1.4em; font-size: calc(var(--fs-small) * .92); color: var(--paper-2); line-height: 1.35; }
+.src-group li { margin-bottom: .4em; }
+.src-group a { color: var(--patina); font-family: var(--mono); font-size: .8em; word-break: break-all; }
+html.no-gl .beat-extra { position: relative; right: auto; left: auto; top: auto; bottom: auto; transform: none; margin-top: 2em; }
+html.no-gl .src-list { max-height: none; }
+@media (max-width: 1100px) { .napier, .var-plate { display: none; } .src-list { columns: 1; } }

@@ -11,6 +11,9 @@ export interface BeatHooks {
   /** вставить инструмент в слот бита */
   mountTool?: (beat: Beat, slot: HTMLElement) => void;
   heroExtra?: () => string;
+  /** дополнительный блок рядом с текстом (таблица Непера, пластинка «VAR!», оси Г–Р) */
+  extra?: (id: NonNullable<Beat['extra']>) => string;
+  sources?: () => string;
 }
 
 /**
@@ -34,18 +37,24 @@ class BeatView {
       parts.push('<div class="hero-lines">');
       for (const k of b.lines) parts.push(`<p class="line">${tHtml(k)}</p>`);
       parts.push('</div>');
+    } else if (b.kind === 'sources') {
+      parts.push(this.hooks.sources ? this.hooks.sources() : '');
     } else {
-      const nTxt = fmtNum(b.n, lang(), 1);
-      parts.push(`<p class="kicker"><span class="kicker-log">log₁₀ d = ${nTxt}</span><span class="kicker-sep" aria-hidden="true"></span><span>${tHtml(b.kicker!)}</span></p>`);
+      const nTxt = fmtNum(Math.min(b.p, 27), lang(), 1);
+      const logTxt = b.p > 27 ? t('hud.end') : `log₁₀ d = ${nTxt}`;
+      parts.push(`<p class="kicker"><span class="kicker-log">${logTxt}</span><span class="kicker-sep" aria-hidden="true"></span><span>${tHtml(b.kicker!)}</span></p>`);
       parts.push(`<h2 class="sr-only">${tHtml(b.kicker!)}</h2>`);
-      for (const k of b.lines.slice(0, 3)) parts.push(`<p class="line">${tHtml(k)}</p>`);
-      if (b.formula) parts.push(`<div class="formula" role="math">${FORMULAS[b.formula]()}</div>`);
-      for (const k of b.lines.slice(3)) parts.push(`<p class="line">${tHtml(k)}</p>`);
-      if (b.formula === 'pogson') parts.push(`<p class="note">${tHtml('pogson.note')}</p>`);
+      const at = b.formulaAt ?? 3;
+      b.lines.forEach((k, i) => {
+        if (b.formula && i === at) parts.push(`<div class="formula" role="math">${FORMULAS[b.formula]()}</div>`);
+        parts.push(`<p class="line">${tHtml(k)}</p>`);
+      });
+      if (b.formula && at >= b.lines.length) parts.push(`<div class="formula" role="math">${FORMULAS[b.formula]()}</div>`);
+      if (b.note) parts.push(`<p class="note">${tHtml(b.note)}</p>`);
       if (b.tool) parts.push('<div class="tool-slot"></div>');
-    }
-    const extra = b.kind === 'hero' && this.hooks.heroExtra ? `<p class="sky-caption">${this.hooks.heroExtra()}</p>` : '';
-    this.el.innerHTML = `<div class="beat-inner">${parts.join('')}</div>${extra}`;
+    }    let extra = b.kind === 'hero' && this.hooks.heroExtra ? `<p class="sky-caption">${this.hooks.heroExtra()}</p>` : '';
+    if (b.extra && this.hooks.extra) extra += this.hooks.extra(b.extra);
+    this.el.innerHTML = `<div class="beat-inner${b.align === 'wide' ? ' is-wide' : ''}">${parts.join('')}</div>${extra}`;
     const slot = this.el.querySelector<HTMLElement>('.tool-slot');
     if (slot && this.hooks.mountTool) this.hooks.mountTool(b, slot);
   }
@@ -76,7 +85,7 @@ class BeatView {
       tl.from(s.words, { yPercent: 115, duration: fast ? 0.6 : 1.25, ease: 'expo.out', stagger: 0.07 });
     }
     const lineEls: HTMLElement[] = [];
-    this.el.querySelectorAll<HTMLElement>('.kicker, .hero-sub, .line, .note, .sky-caption').forEach((p) => {
+    this.el.querySelectorAll<HTMLElement>('.kicker, .hero-sub, .line, .note, .sky-caption, .src-intro').forEach((p) => {
       const s = SplitText.create(p, { type: 'lines', linesClass: 'ln' });
       this.splits.push(s);
       lineEls.push(...(s.lines as HTMLElement[]));
@@ -84,6 +93,10 @@ class BeatView {
     tl.fromTo(lineEls, { '--p': 0, opacity: 0.25 }, { '--p': 1, opacity: 1, duration: fast ? 0.45 : 0.95, ease: 'power2.inOut', stagger: fast ? 0.05 : 0.11 }, title ? 0.35 : 0);
     const formula = this.el.querySelector<HTMLElement>('.formula');
     if (formula) tl.fromTo(formula, { '--p': 0, opacity: 0 }, { '--p': 1, opacity: 1, duration: 1.1, ease: 'power2.inOut' }, fast ? 0.15 : 0.55);
+    const side = this.el.querySelector<HTMLElement>('.beat-extra');
+    if (side) tl.fromTo(side, { autoAlpha: 0, x: 24 }, { autoAlpha: 1, x: 0, duration: 1.1, ease: 'expo.out' }, fast ? 0.1 : 0.45);
+    const src = this.el.querySelectorAll<HTMLElement>('.src-group');
+    if (src.length) tl.fromTo(src, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.7, stagger: 0.08 }, 0.2);
     const tool = this.el.querySelector<HTMLElement>('.tool-slot');
     if (tool) tl.fromTo(tool, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 0.8 }, fast ? 0.2 : 0.9);
     this.tl = tl;
@@ -123,7 +136,7 @@ export class BeatsController {
       if (this.active) { this.active.hide(true); this.active = null; }
       return;
     }
-    const cand = this.views.find((v) => n >= v.beat.win[0] && n <= v.beat.win[1]) ?? null;
+    const cand = this.views.find((v) => n >= v.beat.win[0] && n <= v.beat.win[1]) ?? null; // n здесь — положение p
     if (cand !== this.active && this.active) { this.active.hide(); this.active = null; }
     if (cand && !this.active && velocity < (this.reduced ? 1e9 : 14)) {
       cand.show();

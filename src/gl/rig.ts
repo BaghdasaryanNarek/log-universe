@@ -1,4 +1,4 @@
-﻿import { add, cross, DEG, lerp, lerp3, mul, norm, slerp, smoother, sub, dot, type V3 } from '../core/vec.ts';
+import { add, cross, DEG, dot, lerp, lerp3, mul, norm, slerp, smoother, sub, type V3 } from '../core/vec.ts';
 import { altAzDir, toAltAz, type ObserverFrame } from './astro.ts';
 
 /**
@@ -15,49 +15,100 @@ export interface CamPose { cam: V3; V: V3; U: V3; R: V3; focus: V3; d: number }
 
 export interface RigInput {
   frame: ObserverFrame;
-  telescope: V3;
+  eye: V3;
   mizarDir: V3;
   alphaCen: V3;
+  earth: V3;
+  moon: V3;
+  gc: V3;
+  ngp: V3;
+  m31: V3;
 }
 
-export function createRig({ frame, telescope, mizarDir, alphaCen }: RigInput) {
+const ECL_N: V3 = [0, -Math.sin(23.4393 * DEG), Math.cos(23.4393 * DEG)];
+/** часть вектора v, перпендикулярная единичному w */
+const perp = (v: V3, w: V3): V3 => norm(sub(v, mul(w, dot(v, w))));
+
+export function createRig(i: RigInput) {
+  const { frame, eye, mizarDir, alphaCen, earth, moon, gc, ngp, m31 } = i;
   const sun: V3 = [0, 0, 0];
+  const sunDir = norm(sub(sun, earth));
   const mz = toAltAz(frame, mizarDir);
   const az = mz.az - 9;
   const heroAlt = Math.min(24, Math.max(7, mz.alt * 0.6 + 4));
+
+  // 1. у земли и подъём
   const vHero = altAzDir(frame, az, heroAlt);
   const vLevel = altAzDir(frame, az, 3);
-  const vDown = altAzDir(frame, az, -52);
-  const upDown = altAzDir(frame, az, 38);
+  const vOrbit = altAzDir(frame, az, -16);
+  const upOrbit = altAzDir(frame, az, 74);
 
-  // Вид на окрестности Солнца: смотрим почти на α Центавра, чтобы Солнце и α Cen
-  // оказались в кадре рядом (угол β от направления на α Cen).
+  // 2. Земля целиком: камера над Ереваном, сдвинута к дневной стороне — виден терминатор
+  const cEarth = norm(add(add(mul(frame.zenith, 0.62), mul(sunDir, 0.62)), mul(ECL_N, 0.25)));
+  const vEarth = mul(cEarth, -1);
+  const upEarth = perp(ECL_N, vEarth);
+
+  // 3. Земля и Луна: смотрим поперёк линии Земля–Луна, с освещённой стороны
+  const em = norm(sub(moon, earth));
+  const cMoon = norm(add(add(mul(perp(sunDir, em), 0.45), mul(perp(ECL_N, em), 0.6)), mul(em, -0.62)));
+  const vMoon = mul(cMoon, -1);
+  const upMoon = perp(ECL_N, vMoon);
+
+  // 4. Солнечная система: над плоскостью эклиптики под 55°
+  const inPlane = perp(sub(earth, sun), ECL_N);
+  const cSol = norm(add(mul(ECL_N, Math.cos(35 * DEG)), mul(inPlane, -Math.sin(35 * DEG))));
+  const vSol = mul(cSol, -1);
+  const upSol = perp(ECL_N, vSol);
+
+  // 5. окрестности Солнца: почти на α Центавра, Солнце и α Cen рядом в кадре
   const A = norm(alphaCen);
   let Q = norm(cross(A, [0, 0, 1]));
   const beta = 26 * DEG;
   const pick = (q: V3) => norm(add(mul(A, Math.cos(beta)), mul(q, Math.sin(beta))));
   let vPog = pick(Q);
   {
-    // α Cen должна быть правее Солнца: левая половина кадра занята текстом
-    const up = norm(sub([0, 0, 1], mul(vPog, dot([0, 0, 1], vPog))));
+    const up = perp([0, 0, 1], vPog);
     const R = norm(cross(vPog, up));
     if (dot(sub(alphaCen, sun), R) < 0) { Q = mul(Q, -1); vPog = pick(Q); }
   }
-  const upPog = norm(sub([0, 0, 1], mul(vPog, dot([0, 0, 1], vPog))));
+  const upPog = perp([0, 0, 1], vPog);
+
+  // 6. Галактика: сверху от северного полюса Галактики под 38°, Солнце — внизу кадра
+  const toSun = perp(sub(sun, gc), ngp);
+  const cMw = norm(add(mul(ngp, Math.cos(38 * DEG)), mul(toSun, Math.sin(38 * DEG))));
+  const vMw = mul(cMw, -1);
+  const upMw = perp(mul(toSun, -1), vMw);
+
+  // 7. Млечный Путь и Андромеда — смотрим поперёк линии между ними
+  const sep = norm(sub(m31, gc));
+  const mid = lerp3(gc, m31, 0.5);
+  const cLg = norm(add(add(mul(perp(ngp, sep), 0.55), mul(norm(cross(sep, ngp)), 0.45)), mul(sep, -0.7)));
+  const vLg = mul(cLg, -1);
+  const upLg = perp(ngp, vLg);
+  const vWeb = norm(add(vLg, mul(sep, 0.35)));
 
   const keys: Key[] = [
-    { n: 0, focus: telescope, V: vHero, up: frame.zenith, sx: 0.17, sy: -0.16 },
-    { n: 3, focus: telescope, V: vLevel, up: frame.zenith, sx: 0.12, sy: -0.2 },
-    { n: 7.5, focus: telescope, V: vDown, up: upDown, sx: 0.1, sy: 0 },
-    { n: 10.4, focus: telescope, V: vDown, up: upDown, sx: 0.1, sy: 0 },
-    { n: 13.4, focus: sun, V: vPog, up: upPog, sx: 0.07, sy: 0.04 },
-    { n: 27, focus: sun, V: vPog, up: upPog, sx: 0.07, sy: 0.04 },
+    { n: 0, focus: eye, V: vHero, up: frame.zenith, sx: 0.17, sy: -0.16 },
+    { n: 3, focus: eye, V: vLevel, up: frame.zenith, sx: 0.12, sy: -0.2 },
+    { n: 5.65, focus: eye, V: vOrbit, up: upOrbit, sx: 0.14, sy: 0.08 },
+    { n: 7.4, focus: earth, V: vEarth, up: upEarth, sx: 0.16, sy: 0 },
+    { n: 8.9, focus: lerp3(earth, moon, 0.5), V: vMoon, up: upMoon, sx: 0.22, sy: 0.02 },
+    { n: 10.3, focus: lerp3(earth, moon, 0.5), V: vMoon, up: upMoon, sx: 0.22, sy: 0.02 },
+    { n: 11.6, focus: sun, V: vSol, up: upSol, sx: 0.16, sy: 0.02 },
+    { n: 12.5, focus: sun, V: vSol, up: upSol, sx: 0.2, sy: 0.02 },
+    { n: 14.2, focus: sun, V: vPog, up: upPog, sx: 0.07, sy: 0.04 },
+    { n: 18.6, focus: sun, V: vPog, up: upPog, sx: 0.07, sy: 0.04 },
+    { n: 21.3, focus: gc, V: vMw, up: upMw, sx: 0.2, sy: 0.02 },
+    // M31 крупно — так, как её видно с Земли (наклон диска 77°)
+    { n: 21.95, focus: m31, V: norm(m31), up: perp(ngp, norm(m31)), sx: 0.2, sy: 0.01 },
+    { n: 23.2, focus: mid, V: vLg, up: upLg, sx: 0.18, sy: -0.02 },
+    { n: 27, focus: mid, V: vWeb, up: upLg, sx: 0.12, sy: 0 },
   ];
 
   return function pose(n: number): CamPose {
-    let i = 0;
-    while (i < keys.length - 2 && n > keys[i + 1].n) i++;
-    const a = keys[i], b = keys[i + 1];
+    let k = 0;
+    while (k < keys.length - 2 && n > keys[k + 1].n) k++;
+    const a = keys[k], b = keys[k + 1];
     const t = smoother((n - a.n) / (b.n - a.n));
     const V = slerp(a.V, b.V, t);
     const upRaw = slerp(a.up, b.up, t);

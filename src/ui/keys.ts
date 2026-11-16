@@ -1,4 +1,4 @@
-import { BEATS } from '../content/scenes.ts';
+﻿import { BEATS } from '../content/scenes.ts';
 
 export interface KeyActions {
   current: () => number;
@@ -23,7 +23,7 @@ const isTyping = (el: Element | null) =>
 export function installKeys(a: KeyActions) {
   const nextN = (dir: 1 | -1) => {
     const n = a.current();
-    const list = BEATS.map((b) => b.n);
+    const list = BEATS.map((b) => b.p);
     if (dir > 0) return list.find((x) => x > n + 0.05);
     return [...list].reverse().find((x) => x < n - 0.05);
   };
@@ -53,8 +53,8 @@ export function installKeys(a: KeyActions) {
       case ' ':
         if (target instanceof HTMLButtonElement) return;
         go = nextN(e.shiftKey ? -1 : 1); break;
-      case 'Home': go = BEATS[0].n; break;
-      case 'End': go = BEATS[BEATS.length - 1].n; break;
+      case 'Home': go = BEATS[0].p; break;
+      case 'End': go = BEATS[BEATS.length - 1].p; break;
       case 'f': case 'F': case 'F5': a.toggleFullscreen(); e.preventDefault(); return;
       case 'l': case 'L': a.cycleLang(); return;
       case 'k': case 'K': a.toggleBoost(); return;
@@ -64,7 +64,7 @@ export function installKeys(a: KeyActions) {
       default:
         if (/^[1-9]$/.test(k)) {
           const b = BEATS.find((x) => x.scene === Number(k));
-          if (b) go = b.n;
+          if (b) go = b.p;
         }
     }
     if (go !== undefined) {

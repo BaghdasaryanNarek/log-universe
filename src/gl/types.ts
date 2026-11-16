@@ -1,9 +1,11 @@
-import type { Object3D } from 'three';
+﻿import type { Object3D } from 'three';
 import type { V3 } from '../core/vec.ts';
 
 /** Состояние кадра. Мировые координаты — метры, экваториальная система ICRS, начало — Солнце. */
 export interface Frame {
   n: number;
+  /** положение на прокрутке (после 27 — финальные разделы) */
+  p: number;
   /** d = 10^n м: расстояние камеры до фокуса и ширина кадра */
   d: number;
   cam: V3;
