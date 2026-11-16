@@ -2,10 +2,10 @@ import { defineConfig, type Plugin } from 'vite';
 import QRCode from 'qrcode';
 
 /**
- * Адрес сайта для QR-кода. На Vercel при сборке задана VERCEL_PROJECT_PRODUCTION_URL
- * (production-домен проекта, без https://); локально — запасное значение.
+ * Адрес сайта для QR-кода. Порядок: SITE_HOST (переменная проекта на Vercel, если задана) →
+ * VERCEL_PROJECT_PRODUCTION_URL (Vercel задаёт при сборке) → постоянный адрес проекта.
  */
-export const SITE_HOST = process.env.VERCEL_PROJECT_PRODUCTION_URL || 'log-universe.vercel.app';
+export const SITE_HOST = process.env.SITE_HOST || process.env.VERCEL_PROJECT_PRODUCTION_URL || 'universe-with-log.vercel.app';
 export const SITE_URL = `https://${SITE_HOST}`;
 
 /** QR-код генерируется при сборке в SVG (чёткий на проекторе): коррекция Q, тихая зона 4 модуля. */

@@ -7,7 +7,7 @@ import jsQR from 'jsqr';
 import { PNG } from 'pngjs';
 
 const url = process.argv[2] ?? 'http://localhost:5173/';
-const expected = process.argv[3] ?? 'https://log-universe.vercel.app';
+const expected = process.argv[3] ?? 'https://universe-with-log.vercel.app';
 const b = await chromium.launch({ args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist'] });
 let ok = true;
 for (const [w, h, mobile] of [[1920, 1080, false], [1280, 720, false], [390, 844, true]] as const) {

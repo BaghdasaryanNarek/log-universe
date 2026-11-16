@@ -1,6 +1,6 @@
 # Our Place in the Stars
 
-**Live site: https://log-universe.vercel.app**
+**Live site: https://universe-with-log.vercel.app**
 
 > **Հայերեն.** Ինտերակտիվ ճամփորդություն մեծության 27 կարգերով՝ մարդուց (10⁰ մ) մինչև դիտարկելի Տիեզերքի եզրը (~10²⁷ մ)։ Ոլորումը լոգարիթմական քանոն է. յուրաքանչյուր բաժանում՝ ×10։ Դպրոցական նախագիծ «Լոգարիթմներ և աստղագիտություն» թեմայով։
 >
@@ -86,7 +86,7 @@ tests/       unit tests for facts, formulas and ephemerides
 
 ## Team
 
-A student team project for a mathematics and astronomy class.
+A student team project for a mathematics and astronomy class — and our first deep dive into **frontend development and motion design**: real-time WebGL, scroll-driven camera choreography, typographic animation and sound design, all in the service of telling one mathematical story. A genuinely interesting experience for all of us.
 
 ## Sources
 
