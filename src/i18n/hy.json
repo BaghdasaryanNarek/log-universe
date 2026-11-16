@@ -262,5 +262,8 @@
   "egg.close": "Փակել",
   "egg.logLabel": "լոգարիթմական r = a·e^(bθ)",
   "egg.archLabel": "Արքիմեդի r = aθ",
-  "num.tip": "տեղը սանդղակի վրա՝ log₁₀ = {l}"
+  "num.tip": "տեղը սանդղակի վրա՝ log₁₀ = {l}",
+  "label.kuiper": "Կոյպերի գոտի",
+  "label.oort": "Օորտի ամպ",
+  "label.oortNote": "մոդել՝ ուղղակիորեն չի դիտարկվել"
 }

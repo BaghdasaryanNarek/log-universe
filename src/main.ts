@@ -5,10 +5,11 @@ import { gsap } from 'gsap';
 import { applyDocument, lang, LANGS, onLang, setLang, t } from './i18n/index.ts';
 import { fmtDate, fmtMag, fmtNum } from './i18n/format.ts';
 import { BEATS } from './content/scenes.ts';
-import { PC, LY, KPC, SUN_ABS_MAG } from './content/facts.ts';
+import { PC, LY, KPC, AU as AU_M, SUN_ABS_MAG } from './content/facts.ts';
 import { add, mul, norm, sub, cross, type V3 } from './core/vec.ts';
 import * as THREE from 'three';
 import { SolarLayer } from './scenes/solar/solar-layer.ts';
+import { BeltsLayer } from './scenes/solar/belts.ts';
 import { GalaxyLayer } from './scenes/galaxy/galaxy-layer.ts';
 import { MILKY_WAY, ANDROMEDA } from './scenes/galaxy/generate.ts';
 import { CosmosLayer } from './scenes/cosmos/web-layer.ts';
@@ -237,6 +238,7 @@ async function main() {
   engine.add(new HorizonLayer(obs, frame, mz.az, mz.alt));
   const solar = new SolarLayer(date, earth);
   engine.add(solar);
+  engine.add(new BeltsLayer());
   genP(0.1); await breathe();
   const mw = new GalaxyLayer({ ...MILKY_WAY, count: 150000 }, { center: gc, e1: mwE1, e2: mwE2, e3: mwE3, range: [18.7, 28.4], gain: 0.42 });
   genP(0.45); await breathe();
@@ -272,7 +274,7 @@ async function main() {
   const live = (i: number) => () => t('label.fromHere', { m: fmtMag(stars.apparentMag(i, camPc()), lang(), 1) });
   labels.set([
     { key: 'you', text: () => t('label.you'), target: add(obs, mul(frame.zenith, 1.6)), range: [0.55, 3.6], off: [-70, -50] },
-    { key: 'mizar', text: () => t('label.mizar'), sub: () => t('label.mizarNote'), target: mul(mizarDir, 1e22), range: [-1, 2.6], off: [-46, -40] },
+    { key: 'mizar', text: () => t('label.mizar'), sub: () => t('label.mizarNote'), target: mul(mizarDir, 1e22), range: [-1, 1.25], off: [-46, -40] },
     { key: 'sun', text: () => t('label.sun'), sub: live(0), target: [0, 0, 0], range: [13.2, 20.6], off: [54, 44] },
     { key: 'acen', text: () => t('label.alphacen'), sub: live(alphaI), target: cat.posM(alphaI), range: [15.4, 17.6], off: [-56, -48] },
     { key: 'prox', text: () => t('label.proxima'), sub: live(cat.find('Proxima Centauri')), target: cat.posM(cat.find('Proxima Centauri')), range: [15.6, 17.6], off: [-64, 46] },
@@ -285,6 +287,8 @@ async function main() {
       range: (['mercury', 'venus', 'mars'].includes(id) ? [11.0, 12.6] : [11.9, 13.8]) as [number, number],
       off: [34, -26] as [number, number],
     })),
+    { key: 'kuiper', text: () => t('label.kuiper'), target: mul(norm(sub(solar.positions.neptune, [0, 0, 0])), 45 * AU_M), range: [12.6, 13.9], off: [40, 40] },
+    { key: 'oort', text: () => t('label.oort'), sub: () => t('label.oortNote'), target: mul(norm(cat.posM(alphaI)), 2.5e4 * AU_M), range: [14.3, 16.2], off: [-60, 56] },
     { key: 'mwsun', text: () => t('mw.sun'), target: [0, 0, 0], range: [19.8, 21.8], off: [60, 46] },
     { key: 'gc', text: () => t('mw.center'), target: gc, range: [19.8, 22.3], off: [70, -56] },
     { key: 'mw2', text: () => t('m31.mw'), target: gc, range: [22.6, 24.2], off: [-60, 50] },

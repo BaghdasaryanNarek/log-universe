@@ -31,7 +31,7 @@ for (const [w, h] of sizes) {
     await page.waitForFunction(() => !document.getElementById('preloader'), null, { timeout: 60000 });
     for (const n of ns) {
       await page.evaluate((nn) => (window as unknown as { __lc: { fly(n: number): Promise<void> } }).__lc.fly(nn), n);
-      await page.waitForTimeout(5200);
+      await page.waitForTimeout(4600);
       await page.screenshot({ path: `shots/${w}x${h}-${lang}-n${n}.png` });
     }
     const fps = await page.evaluate(() => (window as unknown as { __lc: { fps(): number; tier(): string } }).__lc.fps().toFixed(0) + ' ' + (window as unknown as { __lc: { tier(): string } }).__lc.tier());

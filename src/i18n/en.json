@@ -262,5 +262,8 @@
   "egg.close": "Close",
   "egg.logLabel": "logarithmic r = a·e^(bθ)",
   "egg.archLabel": "Archimedean r = aθ",
-  "num.tip": "place on the scale: log₁₀ = {l}"
+  "num.tip": "place on the scale: log₁₀ = {l}",
+  "label.kuiper": "Kuiper Belt",
+  "label.oort": "Oort Cloud",
+  "label.oortNote": "a model: never observed directly"
 }

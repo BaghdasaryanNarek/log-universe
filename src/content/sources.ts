@@ -26,6 +26,7 @@ export const SOURCES: Source[] = [
   { group: 'astro', id: 'nssdc-neptune', title: 'NASA NSSDC Neptune Fact Sheet', url: 'https://nssdc.gsfc.nasa.gov/planetary/factsheet/neptunefact.html' },
   { group: 'astro', id: 'jpl-elements', title: 'E. M. Standish. Keplerian Elements for Approximate Positions of the Major Planets (JPL SSD)', url: 'https://ssd.jpl.nasa.gov/planets/approx_pos.html' },
   { group: 'astro', id: 'jpl-sbdb', title: 'NASA JPL Small-Body Database: Церера (a = 2,77 а.е., T = 4,60 г.), Плутон (39,48; 247,9), комета Галлея (17,8; 75,3)', url: 'https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html' },
+  { group: 'astro', id: 'nasa-oort', title: 'NASA Science: пояс Койпера (≈ 30–50 а.е.) и облако Оорта (оценочно ≈ 2 000–100 000 а.е.; напрямую не наблюдалось)', url: 'https://science.nasa.gov/solar-system/oort-cloud/' },
   { group: 'astro', id: 'nasa-iss', title: 'NASA: International Space Station — высота орбиты ≈ 400 км', url: 'https://www.nasa.gov/international-space-station/' },
   { group: 'astro', id: 'dv-leo', title: 'Δv до низкой орбиты ≈ 9,3–10 км/с с потерями; vₑ водород-кислород ≈ 4,4 км/с (Isp ≈ 450 с) — оценка' },
   { group: 'astro', id: 'jpl-voyager', title: 'NASA JPL: Voyager Mission Status (≈ 170 а.е. в 2026 г.)', url: 'https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/' },
