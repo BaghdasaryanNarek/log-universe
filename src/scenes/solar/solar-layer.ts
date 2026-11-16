@@ -131,7 +131,8 @@ export class SolarLayer implements Layer {
     };
 
     add('sun', 6.957e8, '#ffd9a0', 4, 7, [0, 0, 0], [9.6, 14.6], 7);
-    add('moon', 1.7374e6, '#b9b4aa', 3, 2.2, moonAbs, [7.6, 10.6]);
+    // Луна: минимум 1 px — на этом масштабе размеры честные даже на телефоне (текст сцены это обещает)
+    add('moon', 1.7374e6, '#b9b4aa', 3, 1.0, moonAbs, [7.6, 10.6]);
     const minPx: Record<string, number> = { mercury: 2.4, venus: 3.2, earth: 3.2, mars: 2.8, jupiter: 5.5, saturn: 4.6, uranus: 3.6, neptune: 3.6 };
     const kind: Record<string, number> = { jupiter: 1, saturn: 2, uranus: 1, neptune: 1 };
     for (const p of PLANETS) {
