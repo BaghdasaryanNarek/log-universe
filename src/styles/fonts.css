@@ -2,14 +2,14 @@
 @font-face {
   font-family: 'Garamond 1614';
   src: url('../assets/fonts/ebgaramond.woff2') format('woff2');
-  font-weight: 400 800;
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Garamond 1614';
   src: url('../assets/fonts/ebgaramond-italic.woff2') format('woff2');
-  font-weight: 400 800;
+  font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
@@ -17,8 +17,7 @@
 @font-face {
   font-family: 'Garamond 1614';
   src: url('../assets/fonts/noto-serif-armenian.woff2') format('woff2');
-  font-weight: 100 900;
-  font-stretch: 62.5% 100%;
+  font-weight: 400;
   font-style: normal;
   unicode-range: U+0530-058F, U+FB13-FB17;
   size-adjust: 82%;
@@ -27,7 +26,7 @@
 @font-face {
   font-family: 'Garamond 1614';
   src: url('../assets/fonts/noto-serif-armenian.woff2') format('woff2');
-  font-weight: 100 900;
+  font-weight: 400;
   font-style: italic;
   unicode-range: U+0530-058F, U+FB13-FB17;
   size-adjust: 82%;
@@ -48,9 +47,24 @@
 @font-face {
   font-family: 'Plex Mono 1614';
   src: url('../assets/fonts/noto-sans-armenian.woff2') format('woff2');
-  font-weight: 100 900;
+  font-weight: 400;
   unicode-range: U+0530-058F, U+FB13-FB17;
   size-adjust: 96%;
   font-display: swap;
 }
 /* Глифы, которых нет в Plex Mono (⁻, θ), берутся из Garamond через стек семейства */
+/* Запасное семейство: прямой Garamond и для курсива — в курсиве EB Garamond нет ⁰…⁹ */
+@font-face {
+  font-family: 'Garamond Fallback';
+  src: url('../assets/fonts/ebgaramond.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Garamond Fallback';
+  src: url('../assets/fonts/ebgaramond.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}

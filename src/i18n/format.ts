@@ -1,4 +1,4 @@
-﻿import { FACTS, type FactId, type Fmt } from '../content/facts.ts';
+import { FACTS, type FactId, type Fmt } from '../content/facts.ts';
 
 export type Lang = 'hy' | 'ru' | 'en';
 export const LOCALES: Record<Lang, string> = { hy: 'hy-AM', ru: 'ru-RU', en: 'en-GB' };

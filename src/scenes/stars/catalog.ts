@@ -19,15 +19,14 @@ export interface StarCatalog {
 export async function loadCatalog(base: string, onProgress: (p: number) => void): Promise<StarCatalog> {
   const [bin, meta] = await Promise.all([
     fetchWithProgress(`${base}data/stars.bin`, onProgress),
-    fetch(`${base}data/stars.json`).then((r) => r.json() as Promise<{ count: number; stride: number; names: StarName[] }>),
+    fetch(`${base}data/stars.json`).then((r) => r.json() as Promise<{ count: number; names: StarName[] }>),
   ]);
-  const f = new Float32Array(bin);
-  const n = meta.count, s = meta.stride;
-  const pos = new Float32Array(n * 3), absMag = new Float32Array(n), ci = new Float32Array(n), nameIdx = new Int32Array(n);
-  for (let i = 0; i < n; i++) {
-    pos[i * 3] = f[i * s]; pos[i * 3 + 1] = f[i * s + 1]; pos[i * 3 + 2] = f[i * s + 2];
-    absMag[i] = f[i * s + 3]; ci[i] = f[i * s + 4]; nameIdx[i] = f[i * s + 5];
-  }
+  // формат v2: Float32 x,y,z; затем Int16 M·1000, (B−V)·1000, индекс имени
+  const n = meta.count;
+  const pos = new Float32Array(bin, 0, n * 3).slice();
+  const q = new Int16Array(bin, n * 12, n * 3);
+  const absMag = new Float32Array(n), ci = new Float32Array(n), nameIdx = new Int32Array(n);
+  for (let i = 0; i < n; i++) { absMag[i] = q[i * 3] / 1000; ci[i] = q[i * 3 + 1] / 1000; nameIdx[i] = q[i * 3 + 2]; }
   const byName = new Map(meta.names.map((x) => [x.name, x.i]));
   const byBayer = new Map(meta.names.map((x) => [`${x.bayer} ${x.con}`, x.i]));
   return {

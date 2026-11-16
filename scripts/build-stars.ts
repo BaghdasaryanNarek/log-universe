@@ -3,8 +3,9 @@
  *
  * Отбор: все звёзды ярче 7,0ᵐ (небо невооружённого глаза с запасом)
  * плюс все звёзды ближе 25 пк (окрестности Солнца для 3D-сцены).
- * Формат stars.bin: Float32 × 6 на звезду — x, y, z (пк, экваториальные ICRS),
- * M (абсолютная звёздная величина V), B−V, индекс имени (−1 если нет).
+ * Формат stars.bin (v2): сначала Float32 × 3 на звезду — x, y, z (пк, экваториальные ICRS);
+ * затем Int16 × 3 на звезду — M·1000 (абсолютная величина V), (B−V)·1000 (−9000 = нет данных),
+ * индекс имени (−1 если нет). Точность 0,001ᵐ с запасом; файл на четверть легче.
  * Звезда 0 — Солнце.
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -90,17 +91,20 @@ for (let i = 1; i < lines.length; i++) {
 stars.sort((a, b) => (a.dist === 0 ? -1 : b.dist === 0 ? 1 : a.mag - b.mag));
 
 const names: { i: number; name: string; hip: number; con: string; bayer: string }[] = [];
-const buf = new Float32Array(stars.length * 6);
+const pos = new Float32Array(stars.length * 3);
+const q = new Int16Array(stars.length * 3);
 stars.forEach((s, i) => {
   let ni = -1;
   if (s.name || (s.bayer && s.mag < 4.5)) { ni = names.length; names.push({ i, name: s.name, hip: s.hip, con: s.con, bayer: s.bayer }); }
-  buf.set([s.x, s.y, s.z, s.M, s.ci, ni], i * 6);
+  pos.set([s.x, s.y, s.z], i * 3);
+  q.set([Math.round(s.M * 1000), Math.round(s.ci * 1000), ni], i * 3);
 });
 
 mkdirSync('public/data', { recursive: true });
-writeFileSync('public/data/stars.bin', Buffer.from(buf.buffer));
+const bytes = Buffer.concat([Buffer.from(pos.buffer), Buffer.from(q.buffer)]);
+writeFileSync('public/data/stars.bin', bytes);
 writeFileSync('public/data/stars.json', JSON.stringify({
   source: 'HYG v4.4, astronexus.com — CC BY-SA 4.0. Derived subset, same license.',
-  count: stars.length, stride: 6, names,
+  count: stars.length, format: 2, names,
 }));
-console.log(`stars: ${stars.length}, named: ${names.length}, bytes: ${buf.byteLength}`);
+console.log(`stars: ${stars.length}, named: ${names.length}, bytes: ${bytes.length}`);

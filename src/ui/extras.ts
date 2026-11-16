@@ -1,4 +1,5 @@
 import { SOURCES } from '../content/sources.ts';
+import { QR_SVG, SITE_URL } from 'virtual:qr';
 import { HR_BOX } from '../scenes/stars/stars-layer.ts';
 import { t, lang } from '../i18n/index.ts';
 import { sup } from '../i18n/format.ts';
@@ -80,6 +81,23 @@ export function hrAxes(): string {
     <span class="hr-reg" style="left:${(x(0.05) / W) * 100}%;top:${(y(13.2) / H) * 100}%">${esc(t('hr.dwarfs'))}</span>
     <span class="hr-reg hr-sun" style="left:${(x(0.656) / W) * 100}%;top:${(y(4.83) / H) * 100}%">${esc(t('hr.sun'))}</span>
   </div>`;
+}
+
+/**
+ * QR-код с production-адресом (генерируется при сборке, см. vite.config.ts).
+ * Подпись сразу на трёх языках: зал смешанный, язык страницы может быть любым.
+ */
+export function qrCard(): string {
+  const host = SITE_URL.replace(/^https?:\/\//, '');
+  return `<figure class="beat-extra qr-card">
+    <div class="qr-code" role="img" aria-label="QR: ${esc(SITE_URL)}">${QR_SVG}</div>
+    <figcaption>
+      <a class="qr-url" href="${esc(SITE_URL)}">${esc(host)}</a>
+      <span lang="hy">Բացեք կայքը ձեր հեռախոսում</span>
+      <span lang="ru">Откройте сайт на своём телефоне</span>
+      <span lang="en">Open the site on your phone</span>
+    </figcaption>
+  </figure>`;
 }
 
 export function sourcesHtml(): string {

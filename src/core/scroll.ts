@@ -1,4 +1,4 @@
-﻿import Lenis from 'lenis';
+import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { N_MAX, P_MAX } from '../content/scenes.ts';

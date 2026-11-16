@@ -43,8 +43,9 @@ export class LogMap {
     c.style.visibility = a > 0.001 ? 'visible' : 'hidden';
     if (a <= 0.001) return;
 
-    const cx = W * 0.68, cy = H * 0.52;
-    const Rmax = Math.min(W * 0.26, H * 0.41);
+    const portrait = W < H;
+    const cx = portrait ? W * 0.47 : W * 0.68, cy = portrait ? H * 0.3 : H * 0.52;
+    const Rmax = portrait ? Math.min(W * 0.42, H * 0.24) : Math.min(W * 0.26, H * 0.41);
     const reach = tIn * 27; // кольца раскрываются изнутри наружу
     const rad = (log: number) => (Math.max(0, log) / 27) * Rmax;
     g.fillStyle = 'rgba(7,8,12,0.9)';

@@ -1,5 +1,5 @@
 {
-  "name": "log-cosmos",
+  "name": "log-universe",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -9,14 +9,14 @@
     "build": "pnpm run check && vite build",
     "preview": "vite preview --host --port 4173",
     "serve": "vite build && vite preview --host --port 4173",
-    "check": "tsc --noEmit && node scripts/check-i18n.ts && node scripts/check-glyphs.ts",
+    "check": "tsc --noEmit && node scripts/check-i18n.ts && node scripts/check-glyphs.ts && node scripts/check-case.ts",
     "test": "vitest run",
     "data:stars": "node scripts/build-stars.ts",
     "data:fonts": "node scripts/subset-fonts.ts",
     "shots": "node scripts/shots.ts"
   },
   "engines": {
-    "node": ">=24"
+    "node": "24.x"
   },
   "dependencies": {
     "gsap": "3.15.1",
@@ -26,12 +26,18 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "@types/pngjs": "^6.0.5",
+    "@types/qrcode": "^1.5.6",
     "@types/three": "0.187.0",
     "fontkit": "3.0.0",
+    "jsqr": "^1.4.0",
     "playwright": "1.65.1",
+    "pngjs": "^7.0.0",
+    "qrcode": "^1.5.4",
     "subset-font": "2.9.0",
     "typescript": "7.0.2",
     "vite": "8.3.8",
     "vitest": "5.1.0"
-  }
+  },
+  "packageManager": "pnpm@10.34.9"
 }

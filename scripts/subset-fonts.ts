@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Подмножества шрифтов → src/assets/fonts/*.woff2 (вариативные оси сохраняются).
  * Наборы символов заданы диапазонами и дополнительно включают все символы
  * из словарей i18n, поэтому новые строки не превратятся в «квадратики».
@@ -22,11 +22,12 @@ for (const f of readdirSync('src/i18n').filter((f) => f.endsWith('.json'))) {
 }
 const DICT = [...dictChars].join('');
 
-const jobs: { src: string; out: string; chars: string }[] = [
-  { src: 'ebgaramond__EBGaramond_wght_.ttf', out: 'ebgaramond.woff2', chars: LATIN + CYR + GREEK + PUNCT + SUPSUB + MATH + DICT },
-  { src: 'ebgaramond__EBGaramond-Italic_wght_.ttf', out: 'ebgaramond-italic.woff2', chars: LATIN + CYR + GREEK + PUNCT + SUPSUB + MATH + DICT },
-  { src: 'notoserifarmenian__NotoSerifArmenian_wdth_wght_.ttf', out: 'noto-serif-armenian.woff2', chars: ARM },
-  { src: 'notosansarmenian__NotoSansArmenian_wdth_wght_.ttf', out: 'noto-sans-armenian.woff2', chars: ARM },
+// Вариативные оси фиксируем: сайт использует одно начертание — файл становится вдвое легче.
+const jobs: { src: string; out: string; chars: string; axes?: Record<string, number> }[] = [
+  { src: 'ebgaramond__EBGaramond_wght_.ttf', out: 'ebgaramond.woff2', chars: LATIN + CYR + GREEK + PUNCT + SUPSUB + MATH + DICT, axes: { wght: 400 } },
+  { src: 'ebgaramond__EBGaramond-Italic_wght_.ttf', out: 'ebgaramond-italic.woff2', chars: LATIN + CYR + PUNCT + MATH + DICT, axes: { wght: 400 } },
+  { src: 'notoserifarmenian__NotoSerifArmenian_wdth_wght_.ttf', out: 'noto-serif-armenian.woff2', chars: ARM, axes: { wght: 400, wdth: 100 } },
+  { src: 'notosansarmenian__NotoSansArmenian_wdth_wght_.ttf', out: 'noto-sans-armenian.woff2', chars: ARM, axes: { wght: 450, wdth: 100 } },
   { src: 'ibmplexmono__IBMPlexMono-Regular.ttf', out: 'plexmono-400.woff2', chars: LATIN + CYR + PUNCT + SUPSUB + MATH + DICT },
   { src: 'ibmplexmono__IBMPlexMono-Medium.ttf', out: 'plexmono-500.woff2', chars: LATIN + CYR + PUNCT + SUPSUB + MATH + DICT },
 ];
@@ -34,7 +35,7 @@ const jobs: { src: string; out: string; chars: string }[] = [
 mkdirSync('src/assets/fonts', { recursive: true });
 for (const j of jobs) {
   const input = readFileSync(`assets-src/fonts/${j.src}`);
-  const out = await subsetFont(input, j.chars, { targetFormat: 'woff2' });
+  const out = await subsetFont(input, j.chars, { targetFormat: 'woff2', ...(j.axes ? { variationAxes: j.axes } : {}) });
   writeFileSync(`src/assets/fonts/${j.out}`, out);
   console.log(`${j.out}: ${(out.length / 1024).toFixed(1)} KB`);
 }

@@ -105,7 +105,8 @@ export function createRig(i: RigInput) {
     { n: 27, focus: mid, V: vWeb, up: upLg, sx: 0.12, sy: 0 },
   ];
 
-  return function pose(n: number): CamPose {
+  /** aspect = ширина/высота. В портрете фокус — по центру и в верхней половине (текст внизу). */
+  return function pose(n: number, aspect = 16 / 9): CamPose {
     let k = 0;
     while (k < keys.length - 2 && n > keys[k + 1].n) k++;
     const a = keys[k], b = keys[k + 1];
@@ -115,7 +116,8 @@ export function createRig(i: RigInput) {
     const R = norm(cross(V, upRaw));
     const U = cross(R, V);
     const focus = lerp3(a.focus, b.focus, t);
-    const sx = lerp(a.sx, b.sx, t), sy = lerp(a.sy, b.sy, t);
+    let sx = lerp(a.sx, b.sx, t), sy = lerp(a.sy, b.sy, t);
+    if (aspect < 1) { sx = 0; sy += 0.22 / aspect; }
     const d = Math.pow(10, n);
     const cam = sub(sub(focus, mul(V, d)), mul(add(mul(R, sx), mul(U, sy)), d));
     return { cam, V, U, R, focus, d };

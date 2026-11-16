@@ -1,4 +1,4 @@
-﻿import { gsap } from 'gsap';
+import { gsap } from 'gsap';
 import { MAG_OBJECTS, type MagObject } from '../../content/facts.ts';
 import { t, lang } from '../../i18n/index.ts';
 import { fmtMag, fmtNum } from '../../i18n/format.ts';

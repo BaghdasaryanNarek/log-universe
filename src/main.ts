@@ -14,7 +14,7 @@ import { GalaxyLayer } from './scenes/galaxy/galaxy-layer.ts';
 import { MILKY_WAY, ANDROMEDA } from './scenes/galaxy/generate.ts';
 import { CosmosLayer } from './scenes/cosmos/web-layer.ts';
 import { LogMap, type MapPoint, type MapLabel } from './ui/logmap.ts';
-import { hrAxes, napierPage, sourcesHtml, varPlate } from './ui/extras.ts';
+import { hrAxes, napierPage, qrCard, sourcesHtml, varPlate } from './ui/extras.ts';
 import { AudioEngine } from './audio/engine.ts';
 import { KeplerTool } from './tools/kepler-log/kepler.ts';
 import { SlideRule } from './tools/slide-rule/rule.ts';
@@ -42,6 +42,8 @@ const params = new URLSearchParams(location.search);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches || params.has('reduced');
 if (reduced) root.classList.add('reduced');
 const BASE = import.meta.env.BASE_URL;
+/** адрес остановки из ссылки (#b-…) — запоминаем до того, как цикл начнёт обновлять hash */
+const START_HASH = location.hash;
 /** кадры сцен для версии без WebGL (scripts/fallback.ts) */
 const FALLBACK_FRAMES = ['hero', 'napier', 'orbit', 'moon', 'au', 'kepler', 'pogson', 'hr', 'milkyway', 'andromeda', 'universe', 'map'];
 
@@ -130,7 +132,7 @@ async function main() {
   const genP = pre.task('gen', 3);
   /** отдать кадр прелоадеру между тяжёлыми шагами генерации */
   const breathe = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
-  const extra = (id: 'napier' | 'var' | 'hr') => (id === 'napier' ? napierPage() : id === 'var' ? varPlate() : hrAxes());
+  const extra = (id: 'napier' | 'var' | 'hr' | 'qr') => (id === 'napier' ? napierPage() : id === 'var' ? varPlate() : id === 'qr' ? qrCard() : hrAxes());
 
   const fontJobs = ['400 1em "Garamond 1614"', 'italic 400 1em "Garamond 1614"', '400 1em "Plex Mono 1614"', '500 1em "Plex Mono 1614"'];
   let fdone = 0;
@@ -413,6 +415,9 @@ async function main() {
   const quality = new QualityGovernor(engine);
   let last = performance.now();
 
+  /** hash начинаем обновлять только после перехода по исходной ссылке */
+  let started = false;
+
   /* ── главный цикл: одна функция n → всё ── */
   const t0 = performance.now();
   gsap.ticker.add(() => {
@@ -420,7 +425,7 @@ async function main() {
     const dt = now - last; last = now;
     if (document.hidden) return;
     const n = scroll.n, p = scroll.p;
-    engine.render(n, rig(n), (now - t0) / 1000, p);
+    engine.render(n, rig(n, innerWidth / innerHeight), (now - t0) / 1000, p);
     if (!forced) quality.tick(dt);
     beats.update(p, scroll.flying, scroll.velocity);
     const cur = beats.current;
@@ -431,7 +436,7 @@ async function main() {
     cursor.tick();
     updateTip();
     // адрес страницы помнит остановку: после сбоя можно вернуться по #b-…
-    if (cur && !scroll.flying && location.hash !== `#b-${cur.id}`) history.replaceState(null, '', `#b-${cur.id}`);
+    if (cur && !scroll.flying && started && location.hash !== `#b-${cur.id}`) history.replaceState(null, '', `#b-${cur.id}`);
     const idx = cur ? BEATS.indexOf(cur) : -1;
     beatNum.textContent = idx >= 0 ? String(idx + 1).padStart(2, '0') : '··';
     const nm = cur ? t(`beat.${cur.id}`) : '';
@@ -454,8 +459,9 @@ async function main() {
   }
   await pre.done();
   // deep link: #b-pogson
-  const target = BEATS.find((b) => `#b-${b.id}` === location.hash);
-  if (target) scroll.flyTo(target.p);
+  const target = BEATS.find((b) => `#b-${b.id}` === START_HASH);
+  if (target) scroll.flyTo(target.p, () => { started = true; });
+  else started = true;
 }
 
 main().catch((e) => {

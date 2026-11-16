@@ -21,7 +21,7 @@ export interface Beat {
   formulaAt?: number;
   note?: string;
   tool?: 'compare' | 'kepler' | 'rule' | 'octaves';
-  extra?: 'napier' | 'var' | 'hr';
+  extra?: 'napier' | 'var' | 'hr' | 'qr';
   align?: 'left' | 'wide';
 }
 
@@ -87,7 +87,7 @@ export const BEATS: Beat[] = [
     id: 'rule', scene: 9, p: 28.8, win: [28.4, 29.2], kind: 'text', kicker: 'rule.kicker',
     lines: ['rule.l1', 'rule.l2', 'rule.l3', 'rule.l4'], tool: 'rule', align: 'wide',
   },
-  { id: 'sources', scene: 0, p: 29.6, win: [29.2, 31], kind: 'sources', lines: [] },
+  { id: 'sources', scene: 0, p: 29.6, win: [29.2, 31], kind: 'sources', lines: [], extra: 'qr' },
 ];
 
 /** Конец прокрутки в «делениях»: 27 декад шкалы + финальные разделы. */

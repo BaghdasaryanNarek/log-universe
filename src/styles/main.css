@@ -13,7 +13,7 @@
   --signal: #ff6a3d;
   --hair: 1.5px;
 
-  --serif: 'Garamond 1614', 'Georgia', serif;
+  --serif: 'Garamond 1614', 'Garamond Fallback', 'Georgia', serif;
   --mono: 'Plex Mono 1614', 'Garamond 1614', ui-monospace, monospace;
 
   /* кегли от высоты экрана: 1080p → ~27 px, 720p → 20 px */
@@ -550,3 +550,72 @@ html.engraving .bignum { -webkit-text-stroke-color: rgba(28,21,13,.35); }
 
 .fallback-img { display: none; }
 html.no-gl .fallback-img { display: block; width: 100%; height: auto; margin: 0 0 1.4em; border: var(--hair) solid rgba(232,176,75,.4); }
+
+/* ── QR-код на финальном экране: тёмные модули на светлой подложке, ≥ 30 % высоты экрана ── */
+.beat--sources .beat-inner { width: min(54vw, 980px); left: var(--gutter); }
+.beat--sources .src-list { columns: 1; max-height: 58vh; }
+.qr-card { position: absolute; right: calc(var(--gutter) + 110px); top: 50%; transform: translateY(-50%); margin: 0; pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: 1em; }
+.qr-code { height: max(34vh, 220px); aspect-ratio: 1; background: #efe7d4; padding: 0; box-shadow: 0 0 0 1px #c9b98f, 0 0 0 9px #efe7d4, 0 0 0 10.5px var(--brass), 0 30px 90px rgba(0,0,0,.6); }
+.qr-code svg { width: 100%; height: 100%; display: block; shape-rendering: crispEdges; }
+.qr-card figcaption { display: flex; flex-direction: column; align-items: center; gap: .15em; text-align: center; }
+.qr-url { font-family: var(--mono); font-size: calc(var(--fs-mono) * 1.25); color: var(--brass-2); text-decoration: none; letter-spacing: .03em; margin-bottom: .35em; }
+.qr-card figcaption span { font-size: var(--fs-small); color: var(--paper-2); font-style: italic; }
+html.no-gl .qr-card { position: relative; right: auto; top: auto; transform: none; align-items: flex-start; }
+@media (max-width: 900px) {
+  .beat--sources .beat-inner { width: calc(100vw - 2 * var(--gutter)); top: auto; bottom: 4vh; transform: none; }
+  .beat--sources .src-list { max-height: 30vh; }
+  .qr-card { right: 50%; top: 12vh; transform: translateX(50%); }
+  .qr-code { height: min(32vh, 70vw); }
+}
+
+/* ── Телефон (портрет): сцена сверху, текст снизу, компактный HUD ── */
+@media (max-width: 700px) {
+  :root { --fs-body: 16.5px; --fs-small: 13.5px; --fs-mono: 11px; --fs-title: 38px; --fs-formula: 19px; --gutter: 16px; }
+  .topbar { padding-top: 12px; }
+  .brand { font-size: 12px; gap: .5em; }
+  .brand-sub { display: none; }
+  .brand-mark { width: 1.6em; height: 1.6em; }
+  .top-right { gap: .4em; }
+  .sound span { display: none; }
+  .sound { padding: .3em .45em; }
+  .lang button { padding: .5em .55em; }
+  .hud-read { top: 58px; }
+  .hud-log-v { font-size: 30px; min-width: 0; }
+  .hud-log-k { font-size: 11px; }
+  .hud-d { font-size: 11px; margin-top: .2em; }
+  .hud-note { display: none; }
+  .hud-honest { font-size: 10px; margin-top: .5em; padding: .2em .45em; }
+  .hud-scale { top: 24vh; bottom: 34vh; width: 30px; }
+  .hud-ruler { transform: scaleX(.65); transform-origin: right; }
+  .hud-ruler .r-label { display: none; }
+  .hud-mark { right: 36px; }
+  .hud-mark-t, .hud-marg { display: none; }
+  .bignum { display: none; }
+  .beat-ind { margin-right: 0; font-size: 10px; }
+  .beat-inner, .beat--hero .beat-inner, .beat-inner.is-wide, .beat--sources .beat-inner {
+    left: var(--gutter); right: var(--gutter); width: auto; top: auto; bottom: 7vh; transform: none;
+    max-height: 60vh; overflow-y: auto; pointer-events: auto;
+    background: linear-gradient(180deg, rgba(7,8,12,0) 0, rgba(7,8,12,.82) 2.5em, rgba(7,8,12,.9));
+    padding-top: 2.5em;
+  }
+  .beat--hero .beat-inner { bottom: 9vh; background: none; }
+  .hero-title { font-size: var(--fs-title); }
+  :lang(hy) .hero-title { font-size: calc(var(--fs-title) * .86); }
+  .hero-sub { font-size: 14px; margin-bottom: 1em; }
+  .kicker { margin-bottom: .8em; flex-wrap: wrap; gap: .5em; }
+  .formula { padding: .4em .7em; overflow-x: auto; max-width: 100%; }
+  .sky-caption { max-width: calc(100vw - 32px); bottom: 3.6vh; font-size: 10px; }
+  .hint { left: 50%; bottom: 1.4vh; font-size: 10px; }
+  .hint::before { display: none; }
+  .tool-slot, #b-compare .tool-slot { width: 100%; overflow-x: auto; }
+  .tool-slot > .tool { min-width: 600px; }
+  .hr-axes, .napier, .var-plate { display: none; }
+  .qr-card { left: 50%; right: auto; top: 12vh; transform: translateX(-50%); }
+  .qr-code { height: min(30vh, 62vw); }
+  .beat--sources .beat-inner { max-height: 44vh; }
+  .beat--sources .src-list { max-height: none; }
+  .src-title { font-size: 26px; }
+  #help .help-card { padding: 1em; }
+  .spira-card { padding: 1.2em; gap: 1em; max-height: 92vh; overflow-y: auto; }
+  .spira-svg { max-height: 30vh; }
+}

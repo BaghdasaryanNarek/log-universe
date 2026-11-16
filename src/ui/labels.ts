@@ -1,4 +1,4 @@
-﻿import type { V3 } from '../core/vec.ts';
+import type { V3 } from '../core/vec.ts';
 import { smoothstep } from '../core/vec.ts';
 import type { Engine } from '../gl/engine.ts';
 

@@ -6,3 +6,5 @@ shots/
 *.log
 .DS_Store
 assets-src/nasa/*.jpg
+.vercel/
+.env*

@@ -1,4 +1,4 @@
-﻿import type { Object3D } from 'three';
+import type { Object3D } from 'three';
 import type { V3 } from '../core/vec.ts';
 
 /** Состояние кадра. Мировые координаты — метры, экваториальная система ICRS, начало — Солнце. */
