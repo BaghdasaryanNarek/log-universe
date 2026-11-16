@@ -64,6 +64,10 @@ pnpm test       # unit tests for every number and formula
 Offline on any Windows PC without Node: copy `dist/` next to `start-offline.ps1` and run
 `powershell -ExecutionPolicy Bypass -File .\start-offline.ps1`.
 
+## Deployment
+
+Hosted on Vercel at **https://universe-with-log.vercel.app**. Every push to `main` builds and publishes a new production version automatically (about a minute); pull requests get preview deployments. A previous version can be restored from the Vercel dashboard (Deployments → … → *Promote to Production* / *Instant Rollback*).
+
 ## Stack
 
 Vite · TypeScript · three.js (WebGL2) · GSAP (ScrollTrigger, SplitText) · Lenis · KaTeX · Web Audio API · Vitest · Playwright (screenshots and checks). No framework, no backend; all assets are local.
