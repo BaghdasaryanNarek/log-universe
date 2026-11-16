@@ -265,5 +265,11 @@
   "num.tip": "place on the scale: log₁₀ = {l}",
   "label.kuiper": "Kuiper Belt",
   "label.oort": "Oort Cloud",
-  "label.oortNote": "a model: never observed directly"
+  "label.oortNote": "a model: never observed directly",
+  "artifact.napier.cap": "1614 · Napier’s table",
+  "artifact.var.cap": "1923 · Hubble’s plate",
+  "artifact.open": "Open image: {name}",
+  "artifact.close": "Close image",
+  "artifact.var.note": "A reconstruction of Hubble’s plate marked “VAR!”, October 1923.",
+  "keys.image": "scene image: open / close"
 }

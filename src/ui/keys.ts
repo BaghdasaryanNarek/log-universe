@@ -11,15 +11,24 @@ export interface KeyActions {
   toggleHelp: (force?: boolean) => void;
   helpOpen: () => boolean;
   toggleDebug: () => void;
+  /** лайтбокс архивного изображения */
+  imageOpen: () => boolean;
+  closeImage: () => void;
+  toggleImage: () => void;
+  /** игрок набирает «napier» — буква I в этот момент не открывает изображение */
+  eggPending: () => boolean;
 }
 
 const isTyping = (el: Element | null) =>
   !!el && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement || (el as HTMLElement).isContentEditable);
 
+const NAV = new Set(['ArrowRight', 'PageDown', 'ArrowLeft', 'PageUp', ' ']);
+
 /**
  * Клавиши докладчика. Кликеры шлют PageUp/PageDown (иногда стрелки), кнопка
  * «чёрный экран» — B или «.», кнопка «старт показа» — F5 (у нас это полный экран).
- * Буквенные клавиши не пересекаются с n, a, p, i, e, r — пасхалка «napier».
+ * Буквы и цифры читаются по event.code — физической клавише, поэтому работают
+ * в любой раскладке (HY / RU / EN).
  */
 export function installKeys(a: KeyActions) {
   const nextN = (dir: 1 | -1) => {
@@ -33,15 +42,22 @@ export function installKeys(a: KeyActions) {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const target = document.activeElement;
     if (isTyping(target)) return;
-    const inTool = !!target?.closest('.tool');
-    const k = e.key;
+    const k = e.key, c = e.code;
 
+    // Открытое изображение: первое «дальше/назад» только закрывает его — докладчик с кликером не проскочит сцену
+    if (a.imageOpen()) {
+      if (k === 'Escape' || NAV.has(k) || c === 'KeyI') { e.preventDefault(); a.closeImage(); return; }
+      if (c === 'KeyF' || k === 'F5') { e.preventDefault(); a.toggleFullscreen(); }
+      return;
+    }
+
+    const inTool = !!target?.closest('.tool');
     if (k === 'Escape') {
       if (a.helpOpen()) { a.toggleHelp(false); e.preventDefault(); return; }
       if (inTool) { (target as HTMLElement).blur(); e.preventDefault(); }
       return;
     }
-    if (a.helpOpen() && k !== 'h' && k !== 'H' && k !== '?') return;
+    if (a.helpOpen() && c !== 'KeyH' && c !== 'Slash') return;
 
     let go: number | undefined;
     switch (k) {
@@ -52,27 +68,34 @@ export function installKeys(a: KeyActions) {
         if (inTool && k === 'ArrowLeft') return;
         go = nextN(-1); break;
       case ' ':
-        if (target instanceof HTMLButtonElement) return;
+        if (target instanceof HTMLButtonElement) return; // пробел на кнопке — её нажатие
         go = nextN(e.shiftKey ? -1 : 1); break;
       case 'Home': go = BEATS[0].p; break;
       case 'End': go = BEATS[BEATS.length - 1].p; break;
-      case 'f': case 'F': case 'F5': a.toggleFullscreen(); e.preventDefault(); return;
-      case 'l': case 'L': a.cycleLang(); return;
-      case 'm': case 'M': a.toggleSound(); return;
-      case 'k': case 'K': a.toggleBoost(); return;
-      case 'b': case 'B': case '.': a.toggleBlack(); return;
-      case 'h': case 'H': case '?': a.toggleHelp(); e.preventDefault(); return;
-      case 'D': if (e.shiftKey) a.toggleDebug(); return;
-      default:
-        if (/^[1-9]$/.test(k)) {
-          const b = BEATS.find((x) => x.scene === Number(k));
-          if (b) go = b.p;
-        }
+      case 'F5': a.toggleFullscreen(); e.preventDefault(); return;
+    }
+    if (go === undefined) {
+      switch (c) {
+        case 'KeyF': a.toggleFullscreen(); e.preventDefault(); return;
+        case 'KeyL': a.cycleLang(); return;
+        case 'KeyM': a.toggleSound(); return;
+        case 'KeyK': a.toggleBoost(); return;
+        case 'KeyB': case 'Period': case 'NumpadDecimal': a.toggleBlack(); return;
+        case 'KeyH': a.toggleHelp(); e.preventDefault(); return;
+        case 'Slash': if (e.shiftKey) { a.toggleHelp(); e.preventDefault(); } return;
+        case 'KeyI': if (!a.eggPending()) { a.toggleImage(); e.preventDefault(); } return;
+        case 'KeyD': if (e.shiftKey) a.toggleDebug(); return;
+      }
+      const digit = /^(?:Digit|Numpad)([1-9])$/.exec(c);
+      if (digit) {
+        const b = BEATS.find((x) => x.scene === Number(digit[1]));
+        if (b) go = b.p;
+      }
     }
     if (go !== undefined) {
       e.preventDefault();
       a.fly(go);
-    } else if (['ArrowRight', 'ArrowLeft', 'PageDown', 'PageUp', ' ', 'Home', 'End'].includes(k)) {
+    } else if (NAV.has(k) || k === 'Home' || k === 'End') {
       // край пути — гасим нативную прокрутку, чтобы не было рывка
       e.preventDefault();
     }

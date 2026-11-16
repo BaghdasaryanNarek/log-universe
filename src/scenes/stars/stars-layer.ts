@@ -5,8 +5,11 @@ import type { Frame, Layer } from '../../gl/types.ts';
 import { bvToRgb, type StarCatalog } from './catalog.ts';
 
 export const SKY_R = 5e4;
-/** рамка диаграммы Г–Р в долях ширины кадра от центра (x) и долях половины высоты (y) */
-export const HR_BOX = { x0: 0.02, x1: 0.3, y: 0.62 };
+/**
+ * Рамка диаграммы Г–Р: x — доли ширины кадра от центра, yb/yt — доли половины высоты вниз/вверх.
+ * Верх опущен (yt < yb), чтобы оси не касались показаний HUD справа сверху.
+ */
+export const HR_BOX = { x0: 0.04, x1: 0.26, yb: 0.74, yt: 0.3 };
 
 /**
  * Каждая звезда в каждом кадре:
@@ -158,7 +161,7 @@ export class StarsLayer implements Layer {
     (u.uHrU.value as THREE.Vector3).set(...f.U);
     (u.uHrV.value as THREE.Vector3).set(...f.V);
     const hh = (0.5 * f.height) / f.width;
-    (u.uHrBox.value as THREE.Vector4).set(HR_BOX.x0, HR_BOX.x1, -HR_BOX.y * hh, HR_BOX.y * hh);
+    (u.uHrBox.value as THREE.Vector4).set(HR_BOX.x0, HR_BOX.x1, -HR_BOX.yb * hh, HR_BOX.yt * hh);
     // на земле глаз адаптирован к ночному небу; в космосе без засветки предел чуть глубже
     u.uMagLim.value = 6.5 + 0.5 * smoothstep(4, 6, f.n);
   }

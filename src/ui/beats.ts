@@ -14,6 +14,8 @@ export interface BeatHooks {
   /** дополнительный блок рядом с текстом (таблица Непера, пластинка «VAR!», оси Г–Р) */
   extra?: (id: NonNullable<Beat['extra']>) => string;
   sources?: () => string;
+  /** миниатюра архивного изображения (компонент Artifacts) */
+  artifact?: (id: NonNullable<Beat['artifact']>) => string;
   /** статичный кадр сцены (версия без WebGL) */
   figure?: (b: Beat) => string;
 }
@@ -54,6 +56,7 @@ class BeatView {
       if (b.formula && at >= b.lines.length) parts.push(`<div class="formula" role="math">${FORMULAS[b.formula]()}</div>`);
       if (b.note) parts.push(`<p class="note">${tHtml(b.note)}</p>`);
       if (b.tool) parts.push('<div class="tool-slot"></div>');
+      if (b.artifact && this.hooks.artifact) parts.push(this.hooks.artifact(b.artifact));
     }    let extra = b.kind === 'hero' && this.hooks.heroExtra ? `<p class="sky-caption">${this.hooks.heroExtra()}</p>` : '';
     if (b.extra && this.hooks.extra) extra += this.hooks.extra(b.extra);
     if (this.hooks.figure) parts.unshift(this.hooks.figure(b));
@@ -100,6 +103,9 @@ class BeatView {
     if (side) tl.fromTo(side, { autoAlpha: 0, x: 24 }, { autoAlpha: 1, x: 0, duration: 1.1, ease: 'expo.out' }, fast ? 0.1 : 0.45);
     const src = this.el.querySelectorAll<HTMLElement>('.src-group');
     if (src.length) tl.fromTo(src, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.7, stagger: 0.08 }, 0.2);
+    // миниатюра — спокойно, после текста: короткое затухание с небольшим сдвигом
+    const thumb = this.el.querySelector<HTMLElement>('.artifact');
+    if (thumb) tl.fromTo(thumb, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 0.4, ease: 'power2.out' }, '>-0.1');
     const tool = this.el.querySelector<HTMLElement>('.tool-slot');
     if (tool) tl.fromTo(tool, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 0.8 }, fast ? 0.2 : 0.9);
     this.tl = tl;
@@ -133,6 +139,9 @@ export class BeatsController {
   }
 
   get current(): Beat | null { return this.active?.beat ?? null; }
+
+  /** архивное изображение текущей сцены (для клавиши I) */
+  get currentArtifact() { return this.active?.beat.artifact; }
 
   update(n: number, flying: boolean, velocity: number) {
     if (flying) {

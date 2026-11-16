@@ -21,7 +21,10 @@ export interface Beat {
   formulaAt?: number;
   note?: string;
   tool?: 'compare' | 'kepler' | 'rule' | 'octaves';
-  extra?: 'napier' | 'var' | 'hr' | 'qr';
+  /** вставка поверх сцены, привязанная к визуализации (оси Г–Р, QR) */
+  extra?: 'hr' | 'qr';
+  /** архивное изображение: миниатюра в текстовой колонке + раскрытие по запросу */
+  artifact?: 'napier' | 'var';
   align?: 'left' | 'wide';
 }
 
@@ -29,7 +32,7 @@ export const BEATS: Beat[] = [
   { id: 'hero', scene: 1, p: 0, win: [-1, 0.75], kind: 'hero', lines: ['hero.l1', 'hero.l2', 'hero.l3'] },
   {
     id: 'napier', scene: 2, p: 1.6, win: [1.05, 2.3], kind: 'text', kicker: 'napier.kicker',
-    lines: ['napier.l1', 'napier.l2', 'napier.l3', 'napier.l4'], formula: 'logprod', formulaAt: 2, extra: 'napier',
+    lines: ['napier.l1', 'napier.l2', 'napier.l3', 'napier.l4'], formula: 'logprod', formulaAt: 2, artifact: 'napier',
   },
   {
     id: 'orbit', scene: 3, p: 5.65, win: [5.2, 6.25], kind: 'text', kicker: 'orbit.kicker',
@@ -73,7 +76,7 @@ export const BEATS: Beat[] = [
   },
   {
     id: 'andromeda', scene: 7, p: 21.95, win: [21.62, 22.5], kind: 'text', kicker: 'm31.kicker',
-    lines: ['m31.l1', 'm31.l2', 'm31.l3', 'm31.l4'], formula: 'leavitt', formulaAt: 2, extra: 'var',
+    lines: ['m31.l1', 'm31.l2', 'm31.l3', 'm31.l4'], formula: 'leavitt', formulaAt: 2, artifact: 'var',
   },
   {
     id: 'universe', scene: 8, p: 26.8, win: [26.3, 27.25], kind: 'text', kicker: 'uni.kicker',

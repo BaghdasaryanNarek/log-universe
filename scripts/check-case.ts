@@ -6,7 +6,8 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { dirname, join, normalize } from 'node:path';
 
-const tracked = new Set(execSync('git ls-files', { encoding: 'utf8' }).split('\n').filter(Boolean));
+// отслеживаемые + новые неигнорируемые файлы (локальная сборка до коммита); на Vercel все файлы уже в git
+const tracked = new Set(execSync('git ls-files --cached --others --exclude-standard', { encoding: 'utf8' }).split('\n').filter(Boolean));
 const trackedLower = new Map([...tracked].map((f) => [f.toLowerCase(), f]));
 const files = [...tracked].filter((f) => /^(src|scripts|tests)\/.*\.(ts|css)$/.test(f) || f === 'index.html' || f === 'vite.config.ts');
 let bad = 0, checked = 0;

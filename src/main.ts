@@ -14,7 +14,8 @@ import { GalaxyLayer } from './scenes/galaxy/galaxy-layer.ts';
 import { MILKY_WAY, ANDROMEDA } from './scenes/galaxy/generate.ts';
 import { CosmosLayer } from './scenes/cosmos/web-layer.ts';
 import { LogMap, type MapPoint, type MapLabel } from './ui/logmap.ts';
-import { hrAxes, napierPage, qrCard, sourcesHtml, varPlate } from './ui/extras.ts';
+import { hrAxes, napierBody, qrCard, sourcesHtml, varBody } from './ui/extras.ts';
+import { Artifacts } from './ui/artifact.ts';
 import { AudioEngine } from './audio/engine.ts';
 import { KeplerTool } from './tools/kepler-log/kepler.ts';
 import { SlideRule } from './tools/slide-rule/rule.ts';
@@ -132,7 +133,13 @@ async function main() {
   const genP = pre.task('gen', 3);
   /** отдать кадр прелоадеру между тяжёлыми шагами генерации */
   const breathe = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
-  const extra = (id: 'napier' | 'var' | 'hr' | 'qr') => (id === 'napier' ? napierPage() : id === 'var' ? varPlate() : id === 'qr' ? qrCard() : hrAxes());
+  const extra = (id: 'hr' | 'qr') => (id === 'qr' ? qrCard() : hrAxes());
+  // архивные изображения сцен: миниатюра в колонке + лайтбокс (клавиша I)
+  const artifacts = new Artifacts({
+    napier: { caption: () => t('artifact.napier.cap'), note: () => `. `, body: napierBody },
+    var: { caption: () => t('artifact.var.cap'), note: () => ` .`, body: varBody },
+  }, reduced);
+  const artifactThumb = (id: 'napier' | 'var') => artifacts.thumb(id);
 
   const fontJobs = ['400 1em "Garamond 1614"', 'italic 400 1em "Garamond 1614"', '400 1em "Plex Mono 1614"', '500 1em "Plex Mono 1614"'];
   let fdone = 0;
@@ -179,6 +186,7 @@ async function main() {
     const beats = new BeatsController(document.getElementById('beats')!, {
       mountTool,
       extra: (id) => (id === 'hr' ? '' : extra(id)),
+      artifact: artifactThumb,
       sources: sourcesHtml,
       figure: (b) => (FALLBACK_FRAMES.includes(b.id) ? `<img class="fallback-img" src="${BASE}fallback/${b.id}.jpg" alt="" loading="lazy" width="960" height="540">` : ''),
     }, true);
@@ -327,6 +335,7 @@ async function main() {
     mountTool,
     heroExtra: () => t('hero.sky', { date: fmtDate(date, lang()), count: fmtNum(cat.count, lang(), 0) }),
     extra,
+    artifact: artifactThumb,
     sources: sourcesHtml,
   }, reduced);
 
@@ -334,6 +343,7 @@ async function main() {
     beats.relocalize(); hud.relocalize(); labels.relocalize(); logmap.invalidate();
   });
 
+  let eggs: ReturnType<typeof installEggs> | null = null;
   installKeys({
     current: () => scroll.p,
     fly,
@@ -345,6 +355,10 @@ async function main() {
     toggleHelp,
     helpOpen: () => !help.hidden,
     toggleDebug: () => root.classList.toggle('debug'),
+    imageOpen: () => artifacts.isOpen,
+    closeImage: () => artifacts.close(),
+    toggleImage: () => artifacts.toggleFor(beats.currentArtifact),
+    eggPending: () => eggs?.pending() ?? false,
   });
 
   /* ── число в тексте → его место на линейке (log₁₀ в HUD) ── */
@@ -367,7 +381,7 @@ async function main() {
   let resizeT = 0;
   window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = window.setTimeout(() => beats.relocalize(), 250); });
 
-  installEggs({ setEngrave: (v) => { engine.engrave = v; }, getEngrave: () => engine.engrave, reduced });
+  eggs = installEggs({ setEngrave: (v) => { engine.engrave = v; }, getEngrave: () => engine.engrave, reduced });
 
   /* ── подсказка о звезде под курсором ── */
   const tip = document.getElementById('star-tip')!;
@@ -428,6 +442,9 @@ async function main() {
     engine.render(n, rig(n, innerWidth / innerHeight), (now - t0) / 1000, p);
     if (!forced) quality.tick(dt);
     beats.update(p, scroll.flying, scroll.velocity);
+    root.classList.toggle('has-artifact', !!beats.currentArtifact);
+    root.classList.toggle('hr-active', beats.current?.extra === 'hr');
+    if (scroll.flying && artifacts.isOpen) artifacts.close();
     const cur = beats.current;
     hud.update(n, cur?.id ?? null, solar.inflation);
     logmap.draw(engine.frame);

@@ -10,7 +10,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
  * Страница в духе «Canon» Непера (1614): угол, синус при радиусе 10⁷ и логарифм Непера
  * L = 10⁷·ln(10⁷ / sin). Значения посчитаны, а не скопированы: у Непера в 7-м знаке бывают ошибки.
  */
-export function napierPage(): string {
+export function napierBody(): string {
   const rows: string[] = [];
   for (let m = 0; m <= 9; m++) {
     const a = ((30 + m / 60) * Math.PI) / 180;
@@ -18,18 +18,15 @@ export function napierPage(): string {
     const L = Math.round(1e7 * Math.log(1e7 / sin));
     rows.push(`<tr><td>${m}</td><td>${sin}</td><td>${L}</td></tr>`);
   }
-  return `<figure class="beat-extra napier" aria-label="${esc(t('napier.tableTitle'))}">
-    <div class="napier-page">
+  return `<div class="napier-page">
       <div class="napier-head">${esc(t('napier.tableTitle'))}</div>
       <table><thead><tr><th>Gr. 30<br><span>min</span></th><th>Sinus</th><th>Logarithmi</th></tr></thead><tbody>${rows.join('')}</tbody></table>
       <div class="napier-rule"></div>
-    </div>
-    <figcaption>${esc(t('napier.tableNote'))}</figcaption>
-  </figure>`;
+    </div>`;
 }
 
 /** Реконструкция пластинки Хаббла (негатив): чёрные звёзды на светлом, обведённая переменная и «VAR!». */
-export function varPlate(): string {
+export function varBody(): string {
   let dots = '';
   let s = 7;
   const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
@@ -37,13 +34,10 @@ export function varPlate(): string {
     const x = r() * 300, y = r() * 220, rr = 0.6 + Math.pow(r(), 6) * 3.4;
     dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rr.toFixed(2)}"/>`;
   }
-  return `<figure class="beat-extra var-plate" aria-hidden="true">
-    <svg viewBox="0 0 300 220"><rect width="300" height="220" class="vp-bg"/><g class="vp-stars">${dots}</g>
+  return `<svg class="var-plate" viewBox="0 0 300 220" role="img" aria-label="VAR!"><rect width="300" height="220" class="vp-bg"/><g class="vp-stars">${dots}</g>
       <circle cx="196" cy="92" r="2.4" class="vp-v1"/><circle cx="196" cy="92" r="11" class="vp-ring"/>
       <path d="M 162 70 q 6 -4 22 12" class="vp-ink"/>
-      <text x="118" y="64" class="vp-var">VAR!</text></svg>
-    <figcaption>M31 · 1923 · ${esc(t('m31.v1'))}</figcaption>
-  </figure>`;
+      <text x="118" y="64" class="vp-var">VAR!</text></svg>`;
 }
 
 /** Оси диаграммы Г–Р, совмещённые с рамкой, в которую шейдер перестраивает звёзды. */
@@ -70,7 +64,7 @@ export function hrAxes(): string {
   }
   // Солнце: B−V = 0,656, M = 4,83
   g += `<circle cx="${x(0.656)}" cy="${y(4.83)}" r="16" class="sun"/>`;
-  return `<div class="beat-extra hr-axes" aria-hidden="true" style="left:${50 + HR_BOX.x0 * 100}vw;width:${(HR_BOX.x1 - HR_BOX.x0) * 100}vw;top:${50 - HR_BOX.y * 50}vh;height:${HR_BOX.y * 100}vh">
+  return `<div class="beat-extra hr-axes" aria-hidden="true" style="left:${50 + HR_BOX.x0 * 100}vw;width:${(HR_BOX.x1 - HR_BOX.x0) * 100}vw;top:${50 - HR_BOX.yt * 50}vh;height:${(HR_BOX.yt + HR_BOX.yb) * 50}vh">
     <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${g}</svg>
     ${labels.join('')}
     <span class="hr-name hr-x">${esc(t('hr.axisX'))}</span>

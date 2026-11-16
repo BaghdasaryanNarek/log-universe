@@ -18,10 +18,11 @@ export function installEggs(opts: { setEngrave: (v: number) => void; getEngrave:
   document.body.appendChild(card);
   const state = { v: 0 };
   window.addEventListener('keydown', (e) => {
-    if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+    // по физической клавише (event.code): «napier» набирается в любой раскладке — HY, RU, EN
+    if (e.ctrlKey || e.metaKey || e.altKey || !/^Key[A-Z]$/.test(e.code)) return;
     const el = document.activeElement;
     if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return;
-    buf = (buf + e.key.toLowerCase()).slice(-word.length);
+    buf = (buf + e.code.slice(3).toLowerCase()).slice(-word.length);
     if (buf !== word) return;
     buf = '';
     const on = opts.getEngrave() < 0.5;
@@ -106,5 +107,9 @@ export function installEggs(opts: { setEngrave: (v: number) => void; getEngrave:
     mark.addEventListener('click', hit);
     mark.addEventListener('keydown', (e) => { if (e.key === 'Enter') hit(); });
   }
-  return { isOpen: () => !dlg.hidden };
+  return {
+    isOpen: () => !dlg.hidden,
+    /** набрано «nap…» — следующая I относится к слову, а не к клавише изображения */
+    pending: () => buf.endsWith('nap'),
+  };
 }
