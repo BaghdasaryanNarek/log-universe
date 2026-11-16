@@ -77,6 +77,13 @@ export const MAG_OBJECTS: MagObject[] = [
   { id: 'xdf', m: 31, src: ['esa-xdf'], approx: true },
 ];
 
+/** Малые тела для проверки третьего закона Кеплера: a [а.е.], T [лет] (NASA NSSDC / JPL SBDB). */
+export const SMALL_BODIES = [
+  { id: 'ceres', a: 2.7675, T: 4.60 },
+  { id: 'halley', a: 17.83, T: 75.32 },
+  { id: 'pluto', a: 39.48, T: 247.94 },
+] as const;
+
 /** Абсолютная величина Солнца M_V (NSSDC Sun Fact Sheet). */
 export const SUN_ABS_MAG = 4.83;
 

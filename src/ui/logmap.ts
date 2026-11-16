@@ -27,7 +27,7 @@ export class LogMap {
 
   draw(f: Frame) {
     const tIn = smoothstep(27.15, 27.85, f.p);
-    const out = 1 - smoothstep(28.7, 29.2, f.p);
+    const out = 1 - smoothstep(28.3, 28.55, f.p);
     const a = tIn * out;
     const key = `${a.toFixed(3)}|${tIn.toFixed(3)}|${lang()}`;
     if (key === this.lastKey) return;

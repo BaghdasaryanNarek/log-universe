@@ -1,10 +1,11 @@
-﻿import { BEATS } from '../content/scenes.ts';
+import { BEATS } from '../content/scenes.ts';
 
 export interface KeyActions {
   current: () => number;
   fly: (n: number) => void;
   toggleFullscreen: () => void;
   cycleLang: () => void;
+  toggleSound: () => void;
   toggleBoost: () => void;
   toggleBlack: () => void;
   toggleHelp: (force?: boolean) => void;
@@ -57,6 +58,7 @@ export function installKeys(a: KeyActions) {
       case 'End': go = BEATS[BEATS.length - 1].p; break;
       case 'f': case 'F': case 'F5': a.toggleFullscreen(); e.preventDefault(); return;
       case 'l': case 'L': a.cycleLang(); return;
+      case 'm': case 'M': a.toggleSound(); return;
       case 'k': case 'K': a.toggleBoost(); return;
       case 'b': case 'B': case '.': a.toggleBlack(); return;
       case 'h': case 'H': case '?': a.toggleHelp(); e.preventDefault(); return;

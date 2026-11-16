@@ -432,3 +432,108 @@ html.no-gl .nogl-note { display: block; margin: 0 var(--gutter); padding-top: 14
 html.no-gl .beat-extra { position: relative; right: auto; left: auto; top: auto; bottom: auto; transform: none; margin-top: 2em; }
 html.no-gl .src-list { max-height: none; }
 @media (max-width: 1100px) { .napier, .var-plate { display: none; } .src-list { columns: 1; } }
+
+/* ── Этап 3 ── */
+.top-right { display: flex; gap: .8em; align-items: stretch; }
+.sound {
+  display: inline-flex; align-items: center; gap: .55em; appearance: none; background: transparent; color: var(--paper);
+  border: var(--hair) solid rgba(232, 176, 75, .7); font-family: var(--mono); font-size: var(--fs-mono); letter-spacing: .1em;
+  padding: .35em .8em; transition: background .3s var(--ease), color .3s var(--ease);
+}
+.sound svg { width: 1.6em; height: 1.6em; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.sound .wave { opacity: 0; transition: opacity .3s; }
+.sound.is-on { background: var(--brass); color: var(--ink); }
+.sound.is-on .wave { opacity: 1; }
+.sound.is-on .mute { opacity: 0; }
+.sound:not(.is-on) { animation: soundHint 2.8s 2.5s 3 var(--ease); }
+@keyframes soundHint { 50% { box-shadow: 0 0 0 6px rgba(232,176,75,.18); } }
+
+.tool button, .kt-toggle, .sr-btns button, .oc-play {
+  appearance: none; background: transparent; color: var(--brass-2); border: var(--hair) solid rgba(232,176,75,.7);
+  font-family: var(--mono); font-size: var(--fs-mono); padding: .35em .8em; letter-spacing: .04em;
+}
+.tool button:hover, .kt-toggle[aria-pressed='true'] { background: rgba(232,176,75,.15); }
+
+/* Кеплер */
+.kt { background: linear-gradient(180deg, rgba(13,16,23,.88), rgba(7,8,12,.72)); border-top: var(--hair) solid rgba(232,176,75,.55); padding: .8em 1.1em 1em; }
+.kt .tool-head { justify-content: space-between; }
+.kt-plot svg { width: 100%; height: calc(var(--fs-small) * 17); display: block; overflow: visible; }
+.kt-grid { stroke: rgba(242,235,221,.12); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.kt-frame { fill: none; stroke: rgba(242,235,221,.5); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.kt-num { fill: var(--dim); font-family: var(--mono); font-size: 22px; }
+.kt-axis { fill: var(--brass); font-family: var(--mono); font-size: 22px; }
+.kt-law { fill: none; stroke: var(--brass); stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-dasharray: 10 6; }
+.kt-slope { fill: var(--brass-2); font-family: var(--serif); font-style: italic; font-size: 30px; }
+.kt-body circle { fill: var(--paper); }
+.kt-body.is-small circle { fill: none; stroke: var(--paper); stroke-width: 2.5; }
+.kt-body text { fill: var(--paper-2); font-family: var(--serif); font-style: italic; font-size: 26px; }
+.kt-you { cursor: grab; outline: none; }
+.kt-you:focus-visible .kt-dot { stroke: var(--paper); stroke-width: 4; }
+.kt-hit { fill: transparent; }
+.kt-dot { fill: var(--patina); }
+.kt-drop { stroke: var(--patina); stroke-width: 1.5; stroke-dasharray: 4 5; vector-effect: non-scaling-stroke; }
+.kt-you text { fill: var(--patina); font-family: var(--mono); font-size: 22px; }
+.kt-out { display: grid; grid-template-columns: auto 1fr; gap: .2em 1.4em; align-items: center; margin-top: .5em; }
+.kt-read { font-family: var(--mono); font-size: var(--fs-mono); color: var(--patina); }
+.kt-tex { font-size: 1.05em; }
+.kt-note { grid-column: 1 / -1; font-style: italic; color: var(--dim); font-size: .85em; }
+
+/* Логарифмическая линейка */
+.sr { background: linear-gradient(180deg, rgba(13,16,23,.88), rgba(7,8,12,.72)); border-top: var(--hair) solid rgba(232,176,75,.55); padding: .8em 1.1em 1em; }
+.sr .tool-head { justify-content: space-between; }
+.sr-btns { display: flex; gap: .5em; }
+.sr-svg { width: 100%; display: block; overflow: visible; touch-action: none; }
+.sr-stator { fill: #e9e0cb; }
+.sr-slide-bg { fill: #f4eddc; }
+.sr-tk { stroke: #1c150d; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.sr-lab { fill: #1c150d; font-family: var(--serif); font-size: 17px; text-anchor: middle; }
+.sr-name { fill: #7a2a12; font-family: var(--mono); font-size: 16px; font-weight: 500; }
+.sr-slide { cursor: ew-resize; outline: none; }
+.sr-slide:focus-visible .sr-slide-bg { fill: #fff6df; }
+.sr-cursor { cursor: ew-resize; outline: none; }
+.sr-glass { fill: rgba(127,214,194,.12); stroke: rgba(127,214,194,.7); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.sr-cursor:focus-visible .sr-glass { stroke: var(--paper); }
+.sr-hair { stroke: #c4371b; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.sr-out { display: grid; grid-template-columns: auto 1fr; gap: .3em 1.4em; align-items: center; margin-top: .6em; }
+.sr-read { font-family: var(--mono); font-size: var(--fs-mono); color: var(--patina); white-space: nowrap; }
+.sr-step { grid-column: 1 / -1; color: var(--brass-2); font-style: italic; min-height: 1.3em; }
+
+/* октавы */
+.oc { margin-top: .4em; }
+.oc-row { display: grid; grid-template-columns: 11em 1fr; gap: .2em 1em; align-items: center; margin: .4em 0 .6em; }
+.oc-play { display: inline-flex; align-items: center; gap: .5em; }
+.oc-tri { width: 0; height: 0; border-left: .6em solid currentColor; border-top: .38em solid transparent; border-bottom: .38em solid transparent; }
+.oc-play.is-playing { background: rgba(232,176,75,.2); }
+.oc-axis { position: relative; height: 2.2em; border-bottom: var(--hair) solid rgba(242,235,221,.4); }
+.oc-note { position: absolute; bottom: 0; transform: translateX(-50%); font-family: var(--mono); font-size: var(--fs-mono); color: var(--paper-2); padding-bottom: .35em; transition: color .2s, transform .2s; }
+.oc-note::after { content: ''; position: absolute; left: 50%; bottom: -.4em; width: 2px; height: .8em; background: var(--brass); }
+.oc-note.is-on { color: var(--ink); background: var(--brass); transform: translateX(-50%) translateY(-.3em); padding: 0 .35em .2em; }
+.oc-note-t { grid-column: 2; margin: .15em 0 0; font-size: .82em; font-style: italic; color: var(--dim); }
+
+/* режим гравюры (пасхалка napier): интерфейс становится бумагой и тушью */
+html.engraving { --paper: #1c150d; --paper-2: #3a2e1f; --dim: #5a4a33; --brass: #7a2a12; --brass-2: #7a2a12; --patina: #24524a; }
+html.engraving .beat-inner, html.engraving .label-t, html.engraving .label-s { text-shadow: none; }
+html.engraving .formula { background: none; }
+html.engraving .tc, html.engraving .kt, html.engraving .sr, html.engraving .lang, html.engraving #star-tip { background: rgba(232,223,202,.75); }
+html.engraving .bignum { -webkit-text-stroke-color: rgba(28,21,13,.35); }
+.egg-card { position: fixed; z-index: 120; left: 50%; top: 14vh; transform: translateX(-50%); text-align: center; pointer-events: none; visibility: hidden; opacity: 0; }
+.egg-card-t { display: block; font-family: var(--serif); font-variant: small-caps; letter-spacing: .12em; font-size: clamp(22px, 3.4vh, 48px); color: #1c150d; }
+.egg-card-s { display: block; font-family: var(--serif); font-style: italic; color: #5a4a33; font-size: var(--fs-small); margin-top: .3em; }
+
+/* Spira mirabilis */
+#spira { position: fixed; inset: 0; z-index: 160; display: grid; place-items: center; background: rgba(7,8,12,.86); backdrop-filter: blur(4px); }
+#spira[hidden] { display: none; }
+.spira-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 2.4em; align-items: center; width: min(1100px, 92vw); border: var(--hair) solid rgba(232,176,75,.6); background: var(--ink-2); padding: 2em 2.4em; }
+.spira-svg { width: 100%; max-height: 62vh; }
+.spira-path { fill: none; stroke: var(--brass-2); stroke-width: 1.6; vector-effect: non-scaling-stroke; transition: stroke .6s; }
+#spira.is-arch .spira-path { stroke: var(--signal); }
+.spira-c { fill: var(--paper); }
+.spira-text h2 { margin: 0 0 .2em; font-weight: 400; font-style: italic; color: var(--brass-2); font-size: calc(var(--fs-title) * .5); }
+.spira-motto { font-variant: small-caps; letter-spacing: .14em; color: var(--paper); margin: 0 0 1em; }
+.spira-text p { font-size: var(--fs-small); color: var(--paper-2); margin: 0 0 .7em; }
+.spira-legend { display: flex; gap: 1.4em; font-family: var(--mono); font-size: var(--fs-mono) !important; }
+.sl-log { color: var(--brass-2); } .sl-arch { color: var(--signal); }
+#spira.is-arch .sl-log { opacity: .45; }
+#spira:not(.is-arch) .sl-arch { opacity: .45; }
+.brand-mark { cursor: pointer; }
+@media (max-width: 900px) { .spira-card { grid-template-columns: 1fr; } }

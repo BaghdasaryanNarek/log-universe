@@ -1,4 +1,4 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -10,6 +10,31 @@ const VignetteShader = {
   uniforms: { tDiffuse: { value: null }, uStrength: { value: 0.42 } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader: 'uniform sampler2D tDiffuse; uniform float uStrength; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); vec2 d = vUv - 0.5; float v = 1.0 - uStrength * smoothstep(0.25, 0.85, dot(d, d) * 2.2); gl_FragColor = vec4(c.rgb * v, c.a); }',
+};
+/**
+ * Пасхалка «napier»: кадр как гравюра 1614 года. Яркость становится тушью на бумаге:
+ * светлое — плотной штриховкой (две сетки под 45° и −45°), звёзды — чёрными точками, как на старых картах.
+ */
+const EngravingShader = {
+  uniforms: { tDiffuse: { value: null }, uMix: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uPaper: { value: new THREE.Color('#e8dfca') }, uInk: { value: new THREE.Color('#1c150d') } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `
+    uniform sampler2D tDiffuse; uniform float uMix; uniform vec2 uRes; uniform vec3 uPaper; uniform vec3 uInk; varying vec2 vUv;
+    float hatch(vec2 p, float a, float sp, float w) { float k = dot(p, vec2(cos(a), sin(a))); return 1.0 - smoothstep(w, w + 0.9, abs(fract(k / sp) - 0.5) * sp); }
+    void main() {
+      vec4 c = texture2D(tDiffuse, vUv);
+      if (uMix <= 0.0) { gl_FragColor = c; return; }
+      float l = clamp(dot(c.rgb, vec3(0.2126, 0.7152, 0.0722)) * 2.2, 0.0, 1.0);
+      vec2 p = vUv * uRes;
+      float ink = smoothstep(0.55, 0.9, l);
+      ink = max(ink, hatch(p, 0.785, 5.0, 0.45) * smoothstep(0.04, 0.2, l));
+      ink = max(ink, hatch(p, -0.785, 5.0, 0.45) * smoothstep(0.18, 0.4, l));
+      ink = max(ink, hatch(p, 0.0, 3.5, 0.4) * smoothstep(0.35, 0.6, l));
+      float grain = fract(sin(dot(floor(p), vec2(12.9898, 78.233))) * 43758.5453) * 0.05;
+      vec3 paper = uPaper * (0.96 + grain) * (1.0 - 0.12 * smoothstep(0.35, 0.75, length(vUv - 0.5)));
+      vec3 g = mix(paper, uInk, ink * 0.92);
+      gl_FragColor = vec4(mix(c.rgb, g, uMix), 1.0);
+    }`,
 };
 import type { V3 } from '../core/vec.ts';
 import { dot, sub } from '../core/vec.ts';
@@ -24,6 +49,9 @@ export class Engine {
   readonly camera: THREE.PerspectiveCamera;
   private composer: EffectComposer;
   private bloom: UnrealBloomPass;
+  private engraving: ShaderPass;
+  /** 0…1 — режим гравюры (пасхалка «napier») */
+  engrave = 0;
   private layers: Layer[] = [];
   private basis = new THREE.Matrix4();
   private tmp = new THREE.Vector3();
@@ -58,6 +86,8 @@ export class Engine {
     this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.55, 0.55, 0.5);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new ShaderPass(VignetteShader));
+    this.engraving = new ShaderPass(EngravingShader);
+    this.composer.addPass(this.engraving);
     this.composer.addPass(new OutputPass());
     this.resize();
   }
@@ -103,6 +133,9 @@ export class Engine {
     this.camera.position.set(0, 0, 0);
     this.camera.updateMatrixWorld();
     for (const l of this.layers) l.update(this.frame);
+    this.engraving.enabled = this.engrave > 0.001;
+    this.engraving.uniforms.uMix.value = this.engrave;
+    (this.engraving.uniforms.uRes.value as THREE.Vector2).set(w * dpr, h * dpr);
     this.composer.render();
   }
 

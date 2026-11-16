@@ -20,7 +20,7 @@ export interface Beat {
   /** индекс строки, перед которой стоит формула (по умолчанию после третьей) */
   formulaAt?: number;
   note?: string;
-  tool?: 'compare' | 'kepler' | 'rule';
+  tool?: 'compare' | 'kepler' | 'rule' | 'octaves';
   extra?: 'napier' | 'var' | 'hr';
   align?: 'left' | 'wide';
 }
@@ -44,8 +44,12 @@ export const BEATS: Beat[] = [
     lines: ['au.l1', 'au.l2', 'au.l3'],
   },
   {
-    id: 'kepler', scene: 0, p: 12.5, win: [12.02, 13.0], kind: 'text', kicker: 'kepler.kicker',
-    lines: ['kepler.l1', 'kepler.l2', 'kepler.l3'], formula: 'kepler', formulaAt: 1, tool: 'kepler',
+    id: 'kepler', scene: 0, p: 12.5, win: [12.02, 12.75], kind: 'text', kicker: 'kepler.kicker',
+    lines: ['kepler.l1', 'kepler.l2', 'kepler.l3'], formula: 'kepler', formulaAt: 1,
+  },
+  {
+    id: 'keplerTool', scene: 0, p: 12.95, win: [12.75, 13.4], kind: 'text', kicker: 'keplerTool.kicker',
+    lines: ['keplerTool.l1'], tool: 'kepler', align: 'wide',
   },
   {
     id: 'pogson', scene: 5, p: 16.8, win: [16.15, 17.03], kind: 'text', kicker: 'pogson.kicker',
@@ -61,7 +65,7 @@ export const BEATS: Beat[] = [
   },
   {
     id: 'weber', scene: 0, p: 18.45, win: [18.12, 18.85], kind: 'text', kicker: 'weber.kicker',
-    lines: ['weber.l1', 'weber.l2', 'weber.l3'], formula: 'fechner', formulaAt: 2, note: 'weber.note',
+    lines: ['weber.l1', 'weber.l2', 'weber.l3'], formula: 'fechner', formulaAt: 2, note: 'weber.note', tool: 'octaves',
   },
   {
     id: 'milkyway', scene: 6, p: 21.3, win: [20.75, 21.62], kind: 'text', kicker: 'mw.kicker',
@@ -76,8 +80,12 @@ export const BEATS: Beat[] = [
     lines: ['uni.l1', 'uni.l2', 'uni.l3'],
   },
   {
-    id: 'map', scene: 0, p: 27.9, win: [27.6, 28.3], kind: 'text', kicker: 'map.kicker',
+    id: 'map', scene: 0, p: 27.9, win: [27.6, 28.4], kind: 'text', kicker: 'map.kicker',
     lines: ['map.l1', 'map.l2'], note: 'map.note',
+  },
+  {
+    id: 'rule', scene: 9, p: 28.8, win: [28.4, 29.2], kind: 'text', kicker: 'rule.kicker',
+    lines: ['rule.l1', 'rule.l2', 'rule.l3', 'rule.l4'], tool: 'rule', align: 'wide',
   },
   { id: 'sources', scene: 0, p: 29.6, win: [29.2, 31], kind: 'sources', lines: [] },
 ];

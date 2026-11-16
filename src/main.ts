@@ -14,6 +14,11 @@ import { MILKY_WAY, ANDROMEDA } from './scenes/galaxy/generate.ts';
 import { CosmosLayer } from './scenes/cosmos/web-layer.ts';
 import { LogMap, type MapPoint, type MapLabel } from './ui/logmap.ts';
 import { hrAxes, napierPage, sourcesHtml, varPlate } from './ui/extras.ts';
+import { AudioEngine } from './audio/engine.ts';
+import { KeplerTool } from './tools/kepler-log/kepler.ts';
+import { SlideRule } from './tools/slide-rule/rule.ts';
+import { OctavesTool } from './tools/octaves/octaves.ts';
+import { installEggs } from './ui/eggs.ts';
 import { LogScroll } from './core/scroll.ts';
 import { Engine, QualityGovernor } from './gl/engine.ts';
 import { createRig } from './gl/rig.ts';
@@ -137,8 +142,26 @@ async function main() {
   help.querySelector('.help-close')!.addEventListener('click', () => toggleHelp(false));
   help.addEventListener('click', (e) => { if (e.target === help) toggleHelp(false); });
 
+  const audio = new AudioEngine();
+  const soundBtn = document.getElementById('sound')!;
+  const syncSound = (on: boolean) => {
+    soundBtn.setAttribute('aria-pressed', String(on));
+    soundBtn.setAttribute('aria-label', t(on ? 'sound.on' : 'sound.off'));
+    soundBtn.classList.toggle('is-on', on);
+  };
+  audio.onChange(syncSound);
+  onLang(() => syncSound(audio.on));
+  soundBtn.addEventListener('click', () => void audio.toggle());
+
   const tool = new CompareTool();
-  onLang(() => tool.render());
+  const kepler = new KeplerTool(audio);
+  const rule = new SlideRule(audio);
+  const octaves = new OctavesTool(audio);
+  onLang(() => { tool.render(); kepler.render(); rule.render(); octaves.render(); });
+  const mountTool = (b: { tool?: string }, slot: HTMLElement) => {
+    const el = b.tool === 'compare' ? tool.el : b.tool === 'kepler' ? kepler.el : b.tool === 'rule' ? rule.el : b.tool === 'octaves' ? octaves.el : null;
+    if (el) slot.appendChild(el);
+  };
 
   /* ── без WebGL: статичная страница со всем текстом и инструментом ── */
   if (!gl) {
@@ -146,7 +169,7 @@ async function main() {
     starsP(1); glP(1); texP(1);
     await fonts;
     const beats = new BeatsController(document.getElementById('beats')!, {
-      mountTool: (b, slot) => { if (b.tool === 'compare') slot.appendChild(tool.el); },
+      mountTool,
       extra: (id) => (id === 'hr' ? '' : extra(id)),
       sources: sourcesHtml,
     }, true);
@@ -282,7 +305,7 @@ async function main() {
   const beatName = document.getElementById('beat-name')!;
 
   const beats = new BeatsController(document.getElementById('beats')!, {
-    mountTool: (b, slot) => { if (b.tool === 'compare') slot.appendChild(tool.el); },
+    mountTool,
     heroExtra: () => t('hero.sky', { date: fmtDate(date, lang()), count: fmtNum(cat.count, lang(), 0) }),
     extra,
     sources: sourcesHtml,
@@ -297,12 +320,15 @@ async function main() {
     fly,
     toggleFullscreen,
     cycleLang: () => setLang(LANGS[(LANGS.indexOf(lang()) + 1) % LANGS.length]),
+    toggleSound: () => void audio.toggle(),
     toggleBoost: () => root.classList.toggle('boost'),
     toggleBlack: () => root.classList.toggle('black'),
     toggleHelp,
     helpOpen: () => !help.hidden,
     toggleDebug: () => root.classList.toggle('debug'),
   });
+
+  installEggs({ setEngrave: (v) => { engine.engrave = v; }, getEngrave: () => engine.engrave, reduced });
 
   /* ── подсказка о звезде под курсором ── */
   const tip = document.getElementById('star-tip')!;
@@ -363,6 +389,7 @@ async function main() {
     const cur = beats.current;
     hud.update(n, cur?.id ?? null, solar.inflation);
     logmap.draw(engine.frame);
+    audio.update(n);
     labels.update(n, engine.frame.pxScale);
     cursor.tick();
     updateTip();
