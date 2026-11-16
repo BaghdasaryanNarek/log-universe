@@ -1,4 +1,4 @@
-﻿import { BEATS, MARGINALIA, N_MAX } from '../content/scenes.ts';
+import { BEATS, MARGINALIA, N_MAX } from '../content/scenes.ts';
 import { t, tHtml, lang } from '../i18n/index.ts';
 import { fmtNum, fmtSci, fmtFact } from '../i18n/format.ts';
 
@@ -36,6 +36,7 @@ export class Hud {
       <div class="hud-scale">
         <svg class="hud-ruler" aria-hidden="true"></svg>
         <div class="hud-marks"></div>
+        <div class="hud-ghost" aria-hidden="true"><span></span></div>
       </div>
       <div class="hud-marg" id="hud-marg"></div>`;
     this.ruler = root.querySelector('.hud-ruler')!;
@@ -119,6 +120,15 @@ export class Hud {
     this.lastLog = '';
     this.lastMarg = '';
     this.lastInfl = -1;
+  }
+
+  /** Показать на шкале положение числа (log₁₀ в метрах) — при наведении на число в тексте. */
+  ghost(log: number | null) {
+    const g = this.root.querySelector<HTMLElement>('.hud-ghost')!;
+    if (log === null || log < 0 || log > N_MAX) { g.classList.remove('is-on'); return; }
+    g.style.transform = `translateY(${(this.h - (log / N_MAX) * this.h).toFixed(1)}px)`;
+    g.querySelector('span')!.textContent = fmtNum(log, lang(), 2);
+    g.classList.add('is-on');
   }
 
   update(n: number, activeBeat: string | null, inflation = 1) {

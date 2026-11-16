@@ -537,3 +537,16 @@ html.engraving .bignum { -webkit-text-stroke-color: rgba(28,21,13,.35); }
 #spira:not(.is-arch) .sl-arch { opacity: .45; }
 .brand-mark { cursor: pointer; }
 @media (max-width: 900px) { .spira-card { grid-template-columns: 1fr; } }
+
+/* ── Этап 4: числа → шкала ── */
+.beat .num[data-log] { pointer-events: auto; border-bottom: 1px dotted rgba(232,176,75,.7); cursor: help; transition: color .2s; }
+.beat .num[data-log]:hover { color: var(--brass-2); }
+#num-tip { position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none; opacity: 0; transition: opacity .2s; font-family: var(--mono); font-size: var(--fs-mono); color: var(--ink); background: var(--brass); padding: .25em .6em; white-space: nowrap; }
+#num-tip.is-on { opacity: 1; }
+.hud-ghost { position: absolute; right: 0; top: 0; width: 46px; height: 0; opacity: 0; transition: opacity .25s; pointer-events: none; }
+.hud-ghost::before { content: ''; position: absolute; right: 0; top: -1px; width: 46px; border-top: 2px solid var(--patina); }
+.hud-ghost span { position: absolute; right: 52px; top: -.75em; font-family: var(--mono); font-size: var(--fs-mono); color: var(--ink); background: var(--patina); padding: 0 .4em; }
+.hud-ghost.is-on { opacity: 1; }
+
+.fallback-img { display: none; }
+html.no-gl .fallback-img { display: block; width: 100%; height: auto; margin: 0 0 1.4em; border: var(--hair) solid rgba(232,176,75,.4); }

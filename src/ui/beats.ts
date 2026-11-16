@@ -1,4 +1,4 @@
-﻿import { gsap } from 'gsap';
+import { gsap } from 'gsap';
 import { SplitText } from 'gsap/SplitText';
 import { BEATS, type Beat } from '../content/scenes.ts';
 import { t, tHtml, lang } from '../i18n/index.ts';
@@ -14,6 +14,8 @@ export interface BeatHooks {
   /** дополнительный блок рядом с текстом (таблица Непера, пластинка «VAR!», оси Г–Р) */
   extra?: (id: NonNullable<Beat['extra']>) => string;
   sources?: () => string;
+  /** статичный кадр сцены (версия без WebGL) */
+  figure?: (b: Beat) => string;
 }
 
 /**
@@ -54,6 +56,7 @@ class BeatView {
       if (b.tool) parts.push('<div class="tool-slot"></div>');
     }    let extra = b.kind === 'hero' && this.hooks.heroExtra ? `<p class="sky-caption">${this.hooks.heroExtra()}</p>` : '';
     if (b.extra && this.hooks.extra) extra += this.hooks.extra(b.extra);
+    if (this.hooks.figure) parts.unshift(this.hooks.figure(b));
     this.el.innerHTML = `<div class="beat-inner${b.align === 'wide' ? ' is-wide' : ''}">${parts.join('')}</div>${extra}`;
     const slot = this.el.querySelector<HTMLElement>('.tool-slot');
     if (slot && this.hooks.mountTool) this.hooks.mountTool(b, slot);

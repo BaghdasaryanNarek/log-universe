@@ -261,5 +261,6 @@
   "egg.spira3": "The stonemason got it wrong and carved an Archimedean spiral r = aθ. It is still in Basel Minster.",
   "egg.close": "Close",
   "egg.logLabel": "logarithmic r = a·e^(bθ)",
-  "egg.archLabel": "Archimedean r = aθ"
+  "egg.archLabel": "Archimedean r = aθ",
+  "num.tip": "place on the scale: log₁₀ = {l}"
 }

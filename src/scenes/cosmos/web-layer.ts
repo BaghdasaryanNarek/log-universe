@@ -126,7 +126,7 @@ export class CosmosLayer implements Layer {
     // Дева: RA 12ʰ27ᵐ, Dec +12°43′, 16,5 Мпк
     const vd = radec(186.75, 12.72);
     this.virgo = [vd[0] * 16.5 * MPC, vd[1] * 16.5 * MPC, vd[2] * 16.5 * MPC];
-    const local = web(Math.round(70000 * quality), 150, 260, 11, { at: [vd[0] * 16.5, vd[1] * 16.5, vd[2] * 16.5], n: 2500, r: 1.6 });
+    const local = web(Math.round(70000 * quality), 150, 260, 11, { at: [vd[0] * 16.5, vd[1] * 16.5, vd[2] * 16.5], n: 700, r: 2.2 });
     const global = web(Math.round(110000 * quality), 14300, 900, 23);
     this.clouds = [new Cloud(local, MPC, [22.9, 25.6], 0.8), new Cloud(global, MPC, [24.7, 28.4], 0.75)];
     for (const c of this.clouds) this.object.add(c.points);

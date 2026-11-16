@@ -17,6 +17,7 @@ uniform float uPxPerUnit;
 uniform float uScale;
 uniform float uOpacity;
 uniform float uDust;
+uniform float uFrame;
 varying vec3 vColor;
 varying float vA;
 varying float vDust;
@@ -26,7 +27,11 @@ void main() {
   float px = size * uScale * uPxPerUnit / max(-mv.z, 1e-6);
   float a = 1.0;
   if (px < 1.2) { a = max(px * px / 1.44, 0.0); px = 1.2; }
-  px = min(px, 40.0);
+  // крупные (близкие) облака: свет сохраняем, размер ограничиваем — иначе пролёт сквозь диск засвечивает кадр
+  if (px > 7.0) { a *= (7.0 / px) * (7.0 / px); px = 7.0 + (px - 7.0) * 0.15; }
+  px = min(px, 14.0);
+  // частицы вплотную к камере гаснут (камера пролетает сквозь диск)
+  a *= smoothstep(0.01, 0.06, -mv.z / uFrame);
   vDust = dust;
   vColor = color;
   vA = a * uOpacity * (dust > 0.5 ? uDust : 1.0);
@@ -79,7 +84,7 @@ export class GalaxyLayer implements Layer {
       const mat = new THREE.ShaderMaterial({
         vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthTest: false, depthWrite: false,
         blending: wantDust ? THREE.NormalBlending : THREE.AdditiveBlending,
-        uniforms: { uPxPerUnit: { value: 1 }, uScale: { value: 1 }, uOpacity: { value: 1 }, uDust: { value: 1 }, uGain: { value: place.gain } },
+        uniforms: { uPxPerUnit: { value: 1 }, uScale: { value: 1 }, uOpacity: { value: 1 }, uDust: { value: 1 }, uGain: { value: place.gain }, uFrame: { value: 1 } },
       });
       this.mats.push(mat);
       const pts = new THREE.Points(geo, mat);
@@ -134,6 +139,8 @@ export class GalaxyLayer implements Layer {
       // размер частицы в кпк → единицы объекта: масштаб уже в матрице, поэтому здесь 1
       mat.uniforms.uScale.value = s;
       mat.uniforms.uOpacity.value = op;
+      // глубина в единицах рендера; кадр шириной d соответствует 1
+      mat.uniforms.uFrame.value = 1;
     }
   }
 

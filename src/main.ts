@@ -41,6 +41,8 @@ const params = new URLSearchParams(location.search);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches || params.has('reduced');
 if (reduced) root.classList.add('reduced');
 const BASE = import.meta.env.BASE_URL;
+/** кадры сцен для версии без WebGL (scripts/fallback.ts) */
+const FALLBACK_FRAMES = ['hero', 'napier', 'orbit', 'moon', 'au', 'kepler', 'pogson', 'hr', 'milkyway', 'andromeda', 'universe', 'map'];
 
 function hasWebGL2(): boolean {
   if (params.has('nogl')) return false;
@@ -124,6 +126,9 @@ async function main() {
   const starsP = pre.task('stars', 4);
   const glP = pre.task('gl', 3);
   const texP = pre.task('tex', 2);
+  const genP = pre.task('gen', 3);
+  /** отдать кадр прелоадеру между тяжёлыми шагами генерации */
+  const breathe = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
   const extra = (id: 'napier' | 'var' | 'hr') => (id === 'napier' ? napierPage() : id === 'var' ? varPlate() : hrAxes());
 
   const fontJobs = ['400 1em "Garamond 1614"', 'italic 400 1em "Garamond 1614"', '400 1em "Plex Mono 1614"', '500 1em "Plex Mono 1614"'];
@@ -166,12 +171,13 @@ async function main() {
   /* ── без WebGL: статичная страница со всем текстом и инструментом ── */
   if (!gl) {
     root.classList.add('no-gl');
-    starsP(1); glP(1); texP(1);
+    starsP(1); glP(1); texP(1); genP(1);
     await fonts;
     const beats = new BeatsController(document.getElementById('beats')!, {
       mountTool,
       extra: (id) => (id === 'hr' ? '' : extra(id)),
       sources: sourcesHtml,
+      figure: (b) => (FALLBACK_FRAMES.includes(b.id) ? `<img class="fallback-img" src="${BASE}fallback/${b.id}.jpg" alt="" loading="lazy" width="960" height="540">` : ''),
     }, true);
     beats.renderStatic();
     onLang(() => { applyDocument(); beats.renderStatic(); });
@@ -231,13 +237,20 @@ async function main() {
   engine.add(new HorizonLayer(obs, frame, mz.az, mz.alt));
   const solar = new SolarLayer(date, earth);
   engine.add(solar);
+  genP(0.1); await breathe();
   const mw = new GalaxyLayer({ ...MILKY_WAY, count: 150000 }, { center: gc, e1: mwE1, e2: mwE2, e3: mwE3, range: [18.7, 28.4], gain: 0.42 });
+  genP(0.45); await breathe();
   const andromeda = new GalaxyLayer({ ...ANDROMEDA, count: 90000 }, { center: m31, e1: major, e2: m31E2, e3: m31E3, range: [20.9, 28.4], gain: 0.7 });
   engine.add(mw);
   engine.add(andromeda);
+  genP(0.7); await breathe();
   const cosmos = new CosmosLayer();
+  genP(1); await breathe();
   engine.add(cosmos);
   engine.onTier = (tier) => { const q = tier === 'high' ? 1 : tier === 'med' ? 0.55 : 0.3; mw.setQuality(q); andromeda.setQuality(q); };
+  // ?tier=low|med — принудительно (проверка на слабой графике и для проектора-«калькулятора»)
+  const forced = params.get('tier');
+  if (forced === 'low' || forced === 'med') engine.setTier(forced);
   glP(0.3);
   engine.render(0, rig(0), 0);
   await engine.warmup();
@@ -321,12 +334,32 @@ async function main() {
     toggleFullscreen,
     cycleLang: () => setLang(LANGS[(LANGS.indexOf(lang()) + 1) % LANGS.length]),
     toggleSound: () => void audio.toggle(),
-    toggleBoost: () => root.classList.toggle('boost'),
+    toggleBoost: () => { root.classList.toggle('boost'); beats.relocalize(); },
     toggleBlack: () => root.classList.toggle('black'),
     toggleHelp,
     helpOpen: () => !help.hidden,
     toggleDebug: () => root.classList.toggle('debug'),
   });
+
+  /* ── число в тексте → его место на линейке (log₁₀ в HUD) ── */
+  const numTip = document.createElement('div');
+  numTip.id = 'num-tip';
+  numTip.setAttribute('role', 'tooltip');
+  document.body.appendChild(numTip);
+  document.addEventListener('pointerover', (e) => {
+    const el = (e.target as Element).closest?.('.num[data-log]') as HTMLElement | null;
+    if (!el) { if (numTip.classList.contains('is-on')) { numTip.classList.remove('is-on'); hud.ghost(null); } return; }
+    const lv = Number(el.dataset.log);
+    numTip.textContent = t('num.tip', { l: fmtNum(lv, lang(), 2) });
+    const r = el.getBoundingClientRect();
+    numTip.style.transform = `translate(${Math.min(r.left, innerWidth - 320)}px, ${r.top - 34}px)`;
+    numTip.classList.add('is-on');
+    hud.ghost(lv);
+  });
+
+  // строки SplitText зависят от ширины — после изменения окна пересобираем активный текст
+  let resizeT = 0;
+  window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = window.setTimeout(() => beats.relocalize(), 250); });
 
   installEggs({ setEngrave: (v) => { engine.engrave = v; }, getEngrave: () => engine.engrave, reduced });
 
@@ -384,7 +417,7 @@ async function main() {
     if (document.hidden) return;
     const n = scroll.n, p = scroll.p;
     engine.render(n, rig(n), (now - t0) / 1000, p);
-    quality.tick(dt);
+    if (!forced) quality.tick(dt);
     beats.update(p, scroll.flying, scroll.velocity);
     const cur = beats.current;
     hud.update(n, cur?.id ?? null, solar.inflation);
@@ -393,6 +426,8 @@ async function main() {
     labels.update(n, engine.frame.pxScale);
     cursor.tick();
     updateTip();
+    // адрес страницы помнит остановку: после сбоя можно вернуться по #b-…
+    if (cur && !scroll.flying && location.hash !== `#b-${cur.id}`) history.replaceState(null, '', `#b-${cur.id}`);
     const idx = cur ? BEATS.indexOf(cur) : -1;
     beatNum.textContent = idx >= 0 ? String(idx + 1).padStart(2, '0') : '··';
     const nm = cur ? t(`beat.${cur.id}`) : '';
